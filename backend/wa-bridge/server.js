@@ -3,6 +3,7 @@ const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 const http = require('http');
+const { execSync } = require('child_process');
 const { Client, LocalAuth } = require('whatsapp-web.js');
 
 // Global error handlers to keep the bridge running 24/7 without crashing
@@ -21,8 +22,25 @@ let qrCodeData = null;
 let clientReady = false;
 let userNumber = null;
 let client = null;
+let isInitializing = false;
+let currentSessionId = 'session_default';
 const sentBotTexts = new Set();
 const knownSelfLids = new Set(['188703733456915@lid']);
+
+// Dynamically kill any lingering headless Chrome instances tied to wa-bridge / wwebjs_auth
+function killLingeringChrome() {
+    if (process.platform === 'win32') {
+        try {
+            console.log('[WhatsApp Bridge] Checking for and terminating lingering headless Chrome processes...');
+            execSync(
+                'powershell -NoProfile -Command "Get-CimInstance Win32_Process -Filter \\"Name = \'chrome.exe\'\\" | Where-Object { $_.CommandLine -like \'*wwebjs_auth*\' -or $_.CommandLine -like \'*wa-bridge*\' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"',
+                { stdio: 'ignore', timeout: 5000 }
+            );
+        } catch (e) {
+            // Ignore if no processes found or timeout
+        }
+    }
+}
 
 // Dynamic browser executable detection for Windows / Linux / macOS
 function findBrowserExecutable() {
@@ -51,7 +69,14 @@ console.log("Using browser binary:", executablePath || "Default Puppeteer bundle
 
 const puppeteerOptions = {
     headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu']
+    args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--no-first-run',
+        '--no-default-browser-check'
+    ]
 };
 if (executablePath) {
     puppeteerOptions.executablePath = executablePath;
@@ -140,61 +165,86 @@ async function handleMessageCreate(msg) {
 }
 
 function initWhatsAppClient() {
+    if (isInitializing) {
+        console.log('[WhatsApp Bridge] Already initializing, skipping redundant call.');
+        return;
+    }
+    isInitializing = true;
+
     try {
-        console.log("[WhatsApp Bridge] Initializing WhatsApp Web client...");
+        killLingeringChrome();
+
+        console.log(`[WhatsApp Bridge] Initializing WhatsApp Web client (session: ${currentSessionId})...`);
+        const authDataPath = path.join(__dirname, '.wwebjs_auth');
+        fs.mkdirSync(authDataPath, { recursive: true });
+
         client = new Client({
-            authStrategy: new LocalAuth({ dataPath: path.join(__dirname, '.wwebjs_auth') }),
+            authStrategy: new LocalAuth({
+                clientId: currentSessionId,
+                dataPath: authDataPath
+            }),
             puppeteer: puppeteerOptions
         });
 
         client.on('qr', (qr) => {
-            console.log('WhatsApp QR code generated');
+            console.log(`[WhatsApp Bridge] New QR code generated at ${new Date().toLocaleTimeString()} (length: ${qr.length})`);
             qrCodeData = qr;
             clientReady = false;
+            isInitializing = false;
         });
 
         client.on('ready', () => {
-            console.log('WhatsApp Web client is READY!');
+            console.log('[WhatsApp Bridge] WhatsApp Web client is READY!');
             clientReady = true;
             qrCodeData = null;
+            isInitializing = false;
             userNumber = client.info && client.info.wid ? client.info.wid.user : null;
             if (client.info && client.info.lid && client.info.lid._serialized) {
                 knownSelfLids.add(client.info.lid._serialized);
             }
-            console.log(`Paired with user phone: ${userNumber}`);
+            console.log(`[WhatsApp Bridge] Paired successfully with phone: ${userNumber}`);
         });
 
         client.on('authenticated', () => {
-            console.log('WhatsApp Web authenticated successfully');
+            console.log('[WhatsApp Bridge] WhatsApp Web authenticated successfully.');
+            qrCodeData = null;
         });
 
         client.on('auth_failure', (msg) => {
-            console.error('WhatsApp authentication failed:', msg);
+            console.error('[WhatsApp Bridge] Authentication failure:', msg);
             clientReady = false;
+            isInitializing = false;
+        });
+
+        client.on('loading_screen', (percent, message) => {
+            console.log(`[WhatsApp Bridge] Loading: ${percent}% - ${message}`);
         });
 
         client.on('disconnected', (reason) => {
-            console.log('WhatsApp Web was disconnected:', reason);
+            console.log('[WhatsApp Bridge] Disconnected:', reason);
             clientReady = false;
             qrCodeData = null;
+            isInitializing = false;
             setTimeout(() => {
                 if (client) {
                     try { client.initialize(); } catch (e) { console.error('Re-init error:', e); }
                 }
-            }, 2000);
+            }, 3000);
         });
 
         client.on('message_create', handleMessageCreate);
 
         client.initialize().catch(err => {
-            console.error("Error in client.initialize():", err.message);
+            console.error("[WhatsApp Bridge] Error in client.initialize():", err.message);
+            isInitializing = false;
         });
     } catch (e) {
-        console.error("Fatal error creating WhatsApp client:", e);
+        console.error("[WhatsApp Bridge] Fatal error launching WhatsApp client:", e);
+        isInitializing = false;
     }
 }
 
-// Initial launch
+// Initial launch on startup
 initWhatsAppClient();
 
 // API Routes
@@ -223,40 +273,52 @@ app.post('/unlink', async (req, res) => {
         clientReady = false;
         qrCodeData = null;
         userNumber = null;
+        isInitializing = false;
 
+        // Gracefully attempt logout and destroy
         if (client) {
             try {
                 await client.logout();
-                console.log('[WhatsApp Bridge] Logged out from WhatsApp Web servers.');
+                console.log('[WhatsApp Bridge] Session logged out.');
             } catch (err) {
                 console.warn('[WhatsApp Bridge] Logout notice (ignored):', err.message);
             }
 
             try {
                 await client.destroy();
-                console.log('[WhatsApp Bridge] Puppeteer client destroyed.');
+                console.log('[WhatsApp Bridge] Client destroyed.');
             } catch (err) {
                 console.warn('[WhatsApp Bridge] Destroy notice (ignored):', err.message);
             }
             client = null;
         }
 
-        // Delete auth cache folder to force a completely fresh pairing QR code
-        const authDir = path.join(__dirname, '.wwebjs_auth');
-        try {
-            if (fs.existsSync(authDir)) {
-                fs.rmSync(authDir, { recursive: true, force: true });
-                console.log('[WhatsApp Bridge] Removed auth directory .wwebjs_auth successfully.');
-            }
-        } catch (fsErr) {
-            console.warn('[WhatsApp Bridge] Auth folder cleanup warning:', fsErr.message);
-        }
+        // Forcefully kill any remaining chrome processes
+        killLingeringChrome();
 
-        // Re-initialize a fresh client to generate a brand new QR code
+        // Rotate to a fresh session directory so file locks NEVER collide
+        const oldSessionId = currentSessionId;
+        currentSessionId = 'session_' + Date.now();
+        console.log(`[WhatsApp Bridge] Switched session ID to: ${currentSessionId}`);
+
+        // Clean up old session directories asynchronously
+        setTimeout(() => {
+            try {
+                const oldDir = path.join(__dirname, '.wwebjs_auth', `session-${oldSessionId}`);
+                if (fs.existsSync(oldDir)) {
+                    fs.rmSync(oldDir, { recursive: true, force: true });
+                    console.log(`[WhatsApp Bridge] Cleaned up old session directory: ${oldDir}`);
+                }
+            } catch (e) {
+                // Ignore background cleanup lock
+            }
+        }, 3000);
+
+        // Spawn brand new client with clean session folder
         setTimeout(() => {
             console.log('[WhatsApp Bridge] Spawning fresh WhatsApp client for new link...');
             initWhatsAppClient();
-        }, 1500);
+        }, 1200);
 
         return res.json({
             success: true,
