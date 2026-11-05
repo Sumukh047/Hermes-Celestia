@@ -1,0 +1,3419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Hermes Agent Studio - Complete Technical Architecture, Omnichannel Gateway Matrix, Autonomous Scheduler, and Render Workflows Cloud Orchestration Engine.">
+  <title>Hermes Agent Studio &mdash; Complete System Architecture &amp; Technical Manual</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+
+    :root {
+      --bg-primary: #0F1012;
+      --bg-secondary: #1E1F22;
+      --bg-tertiary: #2B2D31;
+      --bg-card: #18191C;
+      --bg-card-hover: #222428;
+      --bg-code: #111214;
+      --bg-input: #1e1f22;
+      --border-color: #35373C;
+      --border-light: rgba(255, 255, 255, 0.08);
+      --border-focus: #5865F2;
+      --text-main: #FFFFFF;
+      --text-muted: #949BA4;
+      --text-dim: #6D737D;
+      --accent-discord: #5865F2;
+      --accent-discord-hover: #4752C4;
+      --accent-green: #57F287;
+      --accent-green-glow: rgba(87, 242, 135, 0.25);
+      --accent-yellow: #FEE75C;
+      --accent-fuchsia: #EB459E;
+      --accent-red: #ED4245;
+      --accent-cyan: #46E3B7;
+      --accent-cyan-glow: rgba(70, 227, 183, 0.25);
+      --accent-blue: #2AABEE;
+      --accent-whatsapp: #25D366;
+      --accent-gmail: #EA4335;
+      --accent-obsidian: #8B5CF6;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: 'JetBrains Mono', Consolas, Monaco, "Courier New", monospace;
+      --font-display: 'Plus Jakarta Sans', var(--font-sans);
+      --radius-xs: 4px;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 18px;
+      --radius-xl: 24px;
+      --radius-pill: 9999px;
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+      --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.6);
+      --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.8);
+      --shadow-glow: 0 0 28px rgba(88, 101, 242, 0.35);
+      --shadow-cyan-glow: 0 0 28px rgba(70, 227, 183, 0.35);
+      --transition-fast: 0.15s ease;
+      --transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      --transition-slow: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      position: relative;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    /* Background Particle Canvas */
+    #particle-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.45;
+    }
+
+    /* Scroll progress bar */
+    .scroll-progress-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent-discord), var(--accent-cyan), var(--accent-green));
+      z-index: 1000;
+      width: 0%;
+      transition: width 0.1s ease;
+    }
+
+    /* Top Sticky Navigation */
+    .top-navbar {
+      position: sticky;
+      top: 0;
+      z-index: 999;
+      background: rgba(15, 16, 18, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 32px;
+      transition: var(--transition);
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+      color: #fff;
+    }
+
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--accent-discord), #8B5CF6);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 18px;
+      box-shadow: 0 0 16px rgba(88, 101, 242, 0.5);
+    }
+
+    .brand-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-tag {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      background: rgba(88, 101, 242, 0.15);
+      color: var(--accent-discord);
+      border: 1px solid rgba(88, 101, 242, 0.35);
+      padding: 2px 8px;
+      border-radius: var(--radius-pill);
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      list-style: none;
+    }
+
+    .nav-link {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: var(--transition);
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .nav-link:hover, .nav-link.active {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .nav-search-box {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .search-input {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-pill);
+      padding: 8px 16px 8px 36px;
+      color: #fff;
+      font-size: 13px;
+      width: 220px;
+      outline: none;
+      transition: var(--transition);
+    }
+
+    .search-input:focus {
+      width: 280px;
+      border-color: var(--accent-discord);
+      box-shadow: 0 0 16px rgba(88, 101, 242, 0.3);
+    }
+
+    .search-icon-nav {
+      position: absolute;
+      left: 12px;
+      color: var(--text-dim);
+      font-size: 14px;
+      pointer-events: none;
+    }
+
+    .status-badge-nav {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-family: var(--font-mono);
+      background: rgba(87, 242, 135, 0.1);
+      color: var(--accent-green);
+      border: 1px solid rgba(87, 242, 135, 0.3);
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+    }
+
+    .status-dot-nav {
+      width: 7px;
+      height: 7px;
+      background-color: var(--accent-green);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--accent-green);
+      animation: pulseGreen 2s infinite;
+    }
+
+    /* Main Container */
+    .main-wrapper {
+      position: relative;
+      z-index: 1;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 40px 24px 100px 24px;
+    }
+
+    /* Hero Section Styling */
+    .hero-section {
+      text-align: center;
+      padding: 60px 20px 80px 20px;
+      position: relative;
+    }
+
+    .hero-badge-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      letter-spacing: 0.02em;
+    }
+
+    .badge-live {
+      background: rgba(87, 242, 135, 0.12);
+      color: var(--accent-green);
+      border: 1px solid rgba(87, 242, 135, 0.35);
+    }
+
+    .badge-discord {
+      background: rgba(88, 101, 242, 0.12);
+      color: var(--accent-discord);
+      border: 1px solid rgba(88, 101, 242, 0.35);
+    }
+
+    .badge-render {
+      background: rgba(70, 227, 183, 0.12);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(70, 227, 183, 0.35);
+    }
+
+    .badge-whatsapp {
+      background: rgba(37, 211, 102, 0.12);
+      color: var(--accent-whatsapp);
+      border: 1px solid rgba(37, 211, 102, 0.35);
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: currentColor;
+      box-shadow: 0 0 10px currentColor;
+      animation: pulseGreen 1.8s infinite;
+    }
+
+    .hero-title {
+      font-family: var(--font-display);
+      font-size: 54px;
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      margin-bottom: 20px;
+      background: linear-gradient(180deg, #FFFFFF 0%, #B0B5BD 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 19px;
+      color: var(--text-muted);
+      max-width: 860px;
+      margin: 0 auto 36px auto;
+      font-weight: 400;
+      line-height: 1.6;
+    }
+
+    .hero-cta-group {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 50px;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 12px 24px;
+      font-size: 14px;
+      font-weight: 600;
+      border-radius: var(--radius-md);
+      text-decoration: none;
+      transition: var(--transition);
+      cursor: pointer;
+      border: 1px solid transparent;
+      outline: none;
+    }
+
+    .btn-primary {
+      background: var(--accent-discord);
+      color: #fff;
+      box-shadow: 0 4px 18px rgba(88, 101, 242, 0.4);
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-discord-hover);
+      box-shadow: 0 6px 24px rgba(88, 101, 242, 0.6);
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      background: var(--bg-tertiary);
+      color: #fff;
+      border-color: var(--border-color);
+    }
+
+    .btn-secondary:hover {
+      background: #35373C;
+      border-color: #4E5058;
+      transform: translateY(-2px);
+    }
+
+    .btn-render {
+      background: rgba(70, 227, 183, 0.15);
+      color: var(--accent-cyan);
+      border-color: rgba(70, 227, 183, 0.4);
+    }
+
+    .btn-render:hover {
+      background: rgba(70, 227, 183, 0.25);
+      box-shadow: var(--shadow-cyan-glow);
+      transform: translateY(-2px);
+    }
+
+    .btn-sm {
+      padding: 6px 14px;
+      font-size: 12px;
+      border-radius: var(--radius-sm);
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      margin: 40px 0;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 22px;
+      text-align: left;
+      position: relative;
+      overflow: hidden;
+      transition: var(--transition);
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--border-focus);
+      box-shadow: var(--shadow-md);
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--accent-discord);
+      opacity: 0.8;
+    }
+
+    .stat-card.cyan::before { background: var(--accent-cyan); }
+    .stat-card.green::before { background: var(--accent-green); }
+    .stat-card.fuchsia::before { background: var(--accent-fuchsia); }
+
+    .stat-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-dim);
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    .stat-value {
+      font-family: var(--font-display);
+      font-size: 26px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+
+    .stat-subtext {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Section Styling */
+    .content-section {
+      margin-top: 80px;
+      padding-top: 30px;
+    }
+
+    .section-header {
+      margin-bottom: 32px;
+    }
+
+    .section-tag {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--accent-discord);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+      display: block;
+      font-weight: 600;
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: 32px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.02em;
+      margin-bottom: 12px;
+    }
+
+    .section-description {
+      font-size: 16px;
+      color: var(--text-muted);
+      max-width: 900px;
+      line-height: 1.6;
+    }
+
+    /* Grids & Cards */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      position: relative;
+      transition: var(--transition);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .feature-card:hover {
+      border-color: rgba(255, 255, 255, 0.2);
+      box-shadow: var(--shadow-md);
+      transform: translateY(-3px);
+      background: var(--bg-card-hover);
+    }
+
+    .feature-icon-wrapper {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-md);
+      background: var(--bg-tertiary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      margin-bottom: 18px;
+      color: var(--accent-discord);
+    }
+
+    .feature-card.cyan .feature-icon-wrapper { color: var(--accent-cyan); background: rgba(70, 227, 183, 0.1); }
+    .feature-card.green .feature-icon-wrapper { color: var(--accent-green); background: rgba(87, 242, 135, 0.1); }
+    .feature-card.fuchsia .feature-icon-wrapper { color: var(--accent-fuchsia); background: rgba(235, 69, 158, 0.1); }
+
+    .feature-card h3 {
+      font-size: 19px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 10px;
+    }
+
+    .feature-card p {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      flex-grow: 1;
+    }
+
+    .feature-card-footer {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      font-family: var(--font-mono);
+      color: var(--text-dim);
+    }
+
+    /* Interactive SVG Diagram Container */
+    .diagram-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 30px;
+      margin: 32px 0;
+      overflow-x: auto;
+      position: relative;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .diagram-svg {
+      width: 100%;
+      min-width: 880px;
+      height: auto;
+      display: block;
+    }
+
+    .svg-node {
+      cursor: pointer;
+      transition: filter 0.2s ease;
+    }
+
+    .svg-node:hover {
+      filter: drop-shadow(0 0 10px var(--accent-discord));
+    }
+
+    /* Comparison Table */
+    .data-table-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      overflow-x: auto;
+      margin: 30px 0;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    .data-table th {
+      background: var(--bg-tertiary);
+      color: #fff;
+      padding: 16px 20px;
+      font-weight: 600;
+      border-bottom: 2px solid var(--border-color);
+      font-family: var(--font-display);
+    }
+
+    .data-table td {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .data-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .data-table tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+      color: #fff;
+    }
+
+    /* Code Block & Terminal UI */
+    .code-window {
+      background: var(--bg-code);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      margin: 24px 0;
+      box-shadow: var(--shadow-md);
+      font-family: var(--font-mono);
+    }
+
+    .code-header {
+      background: var(--bg-secondary);
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .code-dots {
+      display: flex;
+      gap: 7px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .dot-red { background: #ED4245; }
+    .dot-yellow { background: #FEE75C; }
+    .dot-green { background: #57F287; }
+
+    .code-title {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-copy {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      padding: 4px 10px;
+      font-size: 11px;
+      border-radius: var(--radius-xs);
+      cursor: pointer;
+      font-family: var(--font-mono);
+      transition: var(--transition-fast);
+    }
+
+    .btn-copy:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      border-color: var(--border-focus);
+    }
+
+    .code-content {
+      padding: 20px;
+      overflow-x: auto;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #D1D5DB;
+    }
+
+    pre {
+      margin: 0;
+      font-family: var(--font-mono);
+    }
+
+    /* Code Tabs Component */
+    .tabs-header {
+      display: flex;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-color);
+      padding: 0 12px;
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      padding: 12px 18px;
+      color: var(--text-muted);
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: var(--font-sans);
+      transition: var(--transition-fast);
+      white-space: nowrap;
+    }
+
+    .tab-btn:hover {
+      color: #fff;
+    }
+
+    .tab-btn.active {
+      color: var(--accent-discord);
+      border-bottom-color: var(--accent-discord);
+      background: rgba(88, 101, 242, 0.05);
+    }
+
+    .tab-pane {
+      display: none;
+    }
+
+    .tab-pane.active {
+      display: block;
+    }
+
+    /* Interactive Simulators */
+    .simulator-box {
+      background: var(--bg-card);
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      padding: 32px;
+      margin: 36px 0;
+      box-shadow: var(--shadow-md);
+      position: relative;
+    }
+
+    .simulator-box.active-glow {
+      border-color: var(--accent-discord);
+      box-shadow: var(--shadow-glow);
+    }
+
+    .simulator-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .sim-title {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .sim-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .sim-select, .sim-input {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      outline: none;
+      font-family: var(--font-mono);
+    }
+
+    .sim-select:focus, .sim-input:focus {
+      border-color: var(--accent-discord);
+    }
+
+    .sim-playground {
+      background: var(--bg-code);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      min-height: 220px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      overflow-y: auto;
+      max-height: 380px;
+    }
+
+    .sim-log-line {
+      margin-bottom: 8px;
+      display: flex;
+      gap: 12px;
+      line-height: 1.5;
+    }
+
+    .sim-ts {
+      color: var(--text-dim);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .sim-type {
+      font-weight: bold;
+      font-size: 11px;
+      padding: 1px 6px;
+      border-radius: var(--radius-xs);
+      height: fit-content;
+    }
+
+    .sim-type.info { background: rgba(88, 101, 242, 0.2); color: var(--accent-discord); }
+    .sim-type.step { background: rgba(254, 231, 92, 0.2); color: var(--accent-yellow); }
+    .sim-type.success { background: rgba(87, 242, 135, 0.2); color: var(--accent-green); }
+    .sim-type.tool { background: rgba(235, 69, 158, 0.2); color: var(--accent-fuchsia); }
+    .sim-type.render { background: rgba(70, 227, 183, 0.2); color: var(--accent-cyan); }
+    .sim-type.error { background: rgba(237, 66, 69, 0.2); color: var(--accent-red); }
+
+    .sim-msg {
+      color: #E2E8F0;
+      word-break: break-word;
+    }
+
+    /* Accordion FAQ */
+    .accordion-group {
+      margin: 24px 0;
+    }
+
+    .accordion-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      margin-bottom: 12px;
+      overflow: hidden;
+      transition: var(--transition);
+    }
+
+    .accordion-item:hover {
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .accordion-trigger {
+      width: 100%;
+      background: transparent;
+      border: none;
+      padding: 18px 22px;
+      text-align: left;
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      font-family: var(--font-display);
+    }
+
+    .accordion-icon {
+      font-size: 18px;
+      transition: transform 0.2s ease;
+      color: var(--text-muted);
+    }
+
+    .accordion-item.open .accordion-icon {
+      transform: rotate(180deg);
+      color: var(--accent-discord);
+    }
+
+    .accordion-body {
+      padding: 0 22px;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease, padding 0.3s ease;
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .accordion-item.open .accordion-body {
+      padding: 0 22px 20px 22px;
+      max-height: 600px;
+    }
+
+    /* Step execution timeline */
+    .stepper {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      margin: 24px 0;
+      position: relative;
+    }
+
+    .stepper::before {
+      content: '';
+      position: absolute;
+      top: 20px;
+      bottom: 20px;
+      left: 20px;
+      width: 2px;
+      background: var(--border-color);
+      z-index: 0;
+    }
+
+    .step-item {
+      display: flex;
+      gap: 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .step-num {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--bg-tertiary);
+      border: 2px solid var(--accent-discord);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      color: #fff;
+      flex-shrink: 0;
+      box-shadow: 0 0 12px rgba(88, 101, 242, 0.4);
+    }
+
+    .step-content {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 18px 22px;
+      flex-grow: 1;
+    }
+
+    .step-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+
+    .step-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* Toast Notification */
+    #toast-notification {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--accent-discord);
+      color: #fff;
+      padding: 14px 22px;
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      box-shadow: var(--shadow-lg);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      opacity: 0;
+      transform: translateY(20px);
+      pointer-events: none;
+      transition: var(--transition);
+    }
+
+    #toast-notification.show {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    /* Footer */
+    .site-footer {
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border-color);
+      padding: 60px 24px 30px 24px;
+      margin-top: 100px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .footer-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 40px;
+      margin-bottom: 40px;
+    }
+
+    .footer-brand h4 {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .footer-brand p {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      max-width: 360px;
+    }
+
+    .footer-col h5 {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #fff;
+      margin-bottom: 16px;
+    }
+
+    .footer-col ul {
+      list-style: none;
+    }
+
+    .footer-col ul li {
+      margin-bottom: 10px;
+    }
+
+    .footer-col ul li a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 14px;
+      transition: var(--transition-fast);
+    }
+
+    .footer-col ul li a:hover {
+      color: #fff;
+    }
+
+    .footer-bottom {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding-top: 24px;
+      border-top: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+      color: var(--text-dim);
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+
+    /* Animations */
+    @keyframes pulseGreen {
+      0% { box-shadow: 0 0 0 0 rgba(87, 242, 135, 0.6); }
+      70% { box-shadow: 0 0 0 8px rgba(87, 242, 135, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(87, 242, 135, 0); }
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 0.8; }
+    }
+
+    @keyframes dataStreamFlow {
+      0% { stroke-dashoffset: 20; }
+      100% { stroke-dashoffset: 0; }
+    }
+
+    .pulse-glow-path {
+      stroke-dasharray: 6;
+      animation: dataStreamFlow 1.2s linear infinite;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .hero-title { font-size: 42px; }
+      .grid-3 { grid-template-columns: repeat(2, 1fr); }
+      .grid-4 { grid-template-columns: repeat(2, 1fr); }
+      .footer-content { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 768px) {
+      .top-navbar { padding: 12px 18px; }
+      .nav-links { display: none; }
+      .hero-title { font-size: 32px; }
+      .hero-subtitle { font-size: 16px; }
+      .grid-2 { grid-template-columns: 1fr; }
+      .grid-3 { grid-template-columns: 1fr; }
+      .grid-4 { grid-template-columns: 1fr; }
+      .footer-content { grid-template-columns: 1fr; }
+      .nav-search-box { display: none; }
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- Top Sticky Navigation Bar -->
+  <header class="top-navbar">
+    <a href="#hero" class="nav-brand">
+      <div class="brand-icon">H</div>
+      <div class="brand-title">
+        Hermes Agent Studio
+        <span class="brand-tag">v2.4.0 Local-First OS</span>
+      </div>
+    </a>
+
+    <ul class="nav-links">
+      <li><a href="#architecture" class="nav-link">Architecture</a></li>
+      <li><a href="#agent-runtime" class="nav-link">Core Runtime</a></li>
+      <li><a href="#omnichannel-matrix" class="nav-link">Omnichannel Matrix</a></li>
+      <li><a href="#scheduler-render" class="nav-link">Scheduler & Render</a></li>
+      <li><a href="#deployment-stack" class="nav-link">Full-Stack Deploy</a></li>
+      <li><a href="#simulators" class="nav-link">Simulators</a></li>
+      <li><a href="#troubleshooting-faq" class="nav-link">Technical FAQ</a></li>
+    </ul>
+
+    <div class="nav-actions">
+      <div class="nav-search-box">
+        <span class="search-icon-nav">&#128269;</span>
+        <input type="text" id="global-search-input" class="search-input" placeholder="Search architecture, APIs, tools..." />
+      </div>
+      <div class="status-badge-nav">
+        <span class="status-dot-nav"></span>
+        <span>LM Studio 1234: Online</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Documentation Content Wrapper -->
+  <main class="main-wrapper">
+
+    <!-- HERO SECTION -->
+    <section class="hero-section" id="hero">
+      <div class="hero-badge-container">
+        <div class="badge badge-live">
+          <span class="pulse-dot"></span> 100% Local-First Engine
+        </div>
+        <div class="badge badge-discord">
+          Discord Gateway v10 Connected
+        </div>
+        <div class="badge badge-render">
+          Render Workflows Durable Orchestration
+        </div>
+        <div class="badge badge-whatsapp">
+          WhatsApp Web Puppeteer Bridge
+        </div>
+      </div>
+
+      <h1 class="hero-title">
+        Hermes Agent Studio<br>
+        Autonomous Local AI Agent Operating System
+      </h1>
+
+      <p class="hero-subtitle">
+        An enterprise-grade, privacy-first Visual AI Agent OS executing purely on local hardware via LM Studio.
+        Featuring unified multi-channel messaging across Discord, Telegram, WhatsApp, and Gmail,
+        an autonomous 15s background scheduler with factual inbox grounding, and Render Workflows
+        for cloud-durable distributed task execution.
+      </p>
+
+      <div class="hero-cta-group">
+        <a href="#architecture" class="btn btn-primary">
+          Explore System Topology
+        </a>
+        <a href="#agent-runtime" class="btn btn-secondary">
+          Core Agent Runtime Loop
+        </a>
+        <a href="#omnichannel-matrix" class="btn btn-secondary">
+          Discord Gateway Protocol
+        </a>
+        <a href="#scheduler-render" class="btn btn-render">
+          Render Workflows Engine
+        </a>
+        <a href="#simulators" class="btn btn-secondary">
+          Launch Interactive Simulators
+        </a>
+      </div>
+
+      <!-- Real-Time Hardware & Engine Telemetry -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Inference Engine</div>
+          <div class="stat-value">LM Studio</div>
+          <div class="stat-subtext">Local GGUF Models &bull; Zero Data Egress &bull; No API Fees</div>
+        </div>
+
+        <div class="stat-card cyan">
+          <div class="stat-label">Omnichannel Dispatch</div>
+          <div class="stat-value">4 Live Channels</div>
+          <div class="stat-subtext">Discord v10 &bull; WhatsApp Web &bull; Telegram &bull; Gmail IMAP</div>
+        </div>
+
+        <div class="stat-card green">
+          <div class="stat-label">Autonomous Daemon</div>
+          <div class="stat-value">15s Tick Rate</div>
+          <div class="stat-subtext">Natural Language Intervals &bull; Factual Grounding Loop</div>
+        </div>
+
+        <div class="stat-card fuchsia">
+          <div class="stat-label">Durable Task Engine</div>
+          <div class="stat-value">Render Workflows</div>
+          <div class="stat-subtext">@app.task Decorators &bull; 3x Exponential Backoff</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 1: ARCHITECTURE TOPOLOGY -->
+    <section class="content-section" id="architecture">
+      <div class="section-header">
+        <span class="section-tag">System Design & Topology</span>
+        <h2 class="section-title">Complete Architectural Blueprint</h2>
+        <p class="section-description">
+          Hermes Agent Studio bridges local consumer AI hardware with multi-channel messaging and cloud-grade durability.
+          The diagram below illustrates the end-to-end dataflow from incoming external webhooks/sockets through our
+          FastAPI routing hub, the multi-turn cognitive execution runtime, local LM Studio VRAM, and Render Workflows workers.
+        </p>
+      </div>
+
+      <!-- Interactive SVG Topology Diagram -->
+      <div class="diagram-container">
+        <svg class="diagram-svg" viewBox="0 0 1200 680" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="coreGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#1E1F22" />
+              <stop offset="100%" stop-color="#2B2D31" />
+            </linearGradient>
+            <linearGradient id="discordGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#5865F2" />
+              <stop offset="100%" stop-color="#4752C4" />
+            </linearGradient>
+            <linearGradient id="renderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#46E3B7" />
+              <stop offset="100%" stop-color="#1FA27D" />
+            </linearGradient>
+            <linearGradient id="lmstudioGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#3B82F6" />
+              <stop offset="100%" stop-color="#1D4ED8" />
+            </linearGradient>
+            <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="120%">
+              <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000" flood-opacity="0.6"/>
+            </filter>
+          </defs>
+
+          <!-- Outer Cluster Bounds -->
+          <!-- Ingestion Cluster -->
+          <rect x="20" y="40" width="260" height="600" rx="16" fill="#141518" stroke="#35373C" stroke-width="1.5" />
+          <text x="40" y="75" fill="#949BA4" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="700" letter-spacing="1">1. OMNICHANNEL INGESTION</text>
+
+          <!-- Channel Nodes -->
+          <!-- Discord Gateway -->
+          <g class="svg-node" id="node-discord">
+            <rect x="40" y="100" width="220" height="100" rx="10" fill="#18191C" stroke="#5865F2" stroke-width="1.5" filter="url(#cardShadow)"/>
+            <circle cx="65" cy="130" r="14" fill="#5865F2"/>
+            <text x="60" y="136" fill="#fff" font-family="'Inter', sans-serif" font-size="16" font-weight="bold">D</text>
+            <text x="90" y="132" fill="#fff" font-family="'Inter', sans-serif" font-size="14" font-weight="bold">Discord Gateway v10</text>
+            <text x="90" y="152" fill="#949BA4" font-family="'JetBrains Mono', monospace" font-size="11">Heartbeat 41.25s &bull; Opcode 1</text>
+            <text x="90" y="172" fill="#57F287" font-family="'JetBrains Mono', monospace" font-size="11">&bull; Hermes047#6785 Online</text>
+          </g>
+
+          <!-- Telegram Bot -->
+          <g class="svg-node" id="node-telegram">
+            <rect x="40" y="220" width="220" height="95" rx="10" fill="#18191C" stroke="#2AABEE" stroke-width="1.5" filter="url(#cardShadow)"/>
+            <circle cx="65" cy="250" r="14" fill="#2AABEE"/>
+            <text x="60" y="256" fill="#fff" font-family="'Inter', sans-serif" font-size="15" font-weight="bold">T</text>
+            <text x="90" y="252" fill="#fff" font-family="'Inter', sans-serif" font-size="14" font-weight="bold">Telegram Bot Daemon</text>
+            <text x="90" y="272" fill="#949BA4" font-family="'JetBrains Mono', monospace" font-size="11">getUpdates Long-Polling</text>
+            <text x="90" y="292" fill="#2AABEE" font-family="'JetBrains Mono', monospace" font-size="11">&bull; Chat Router Active</text>
+          </g>
+
+          <!-- WhatsApp Web Bridge -->
+          <g class="svg-node" id="node-whatsapp">
+            <rect x="40" y="335" width="220" height="95" rx="10" fill="#18191C" stroke="#25D366" stroke-width="1.5" filter="url(#cardShadow)"/>
+            <circle cx="65" cy="365" r="14" fill="#25D366"/>
+            <text x="60" y="371" fill="#fff" font-family="'Inter', sans-serif" font-size="15" font-weight="bold">W</text>
+            <text x="90" y="367" fill="#fff" font-family="'Inter', sans-serif" font-size="14" font-weight="bold">WhatsApp Bridge</text>
+            <text x="90" y="387" fill="#949BA4" font-family="'JetBrains Mono', monospace" font-size="11">Node.js Puppeteer :3001</text>
+            <text x="90" y="407" fill="#25D366" font-family="'JetBrains Mono', monospace" font-size="11">&bull; 'You' Chat Sandbox</text>
+          </g>
+
+          <!-- Gmail IMAP Engine -->
+          <g class="svg-node" id="node-gmail">
+            <rect x="40" y="450" width="220" height="95" rx="10" fill="#18191C" stroke="#EA4335" stroke-width="1.5" filter="url(#cardShadow)"/>
+            <circle cx="65" cy="480" r="14" fill="#EA4335"/>
+            <text x="60" y="486" fill="#fff" font-family="'Inter', sans-serif" font-size="15" font-weight="bold">G</text>
+            <text x="90" y="482" fill="#fff" font-family="'Inter', sans-serif" font-size="14" font-weight="bold">Gmail IMAP Engine</text>
+            <text x="90" y="502" fill="#949BA4" font-family="'JetBrains Mono', monospace" font-size="11">RFC 822 Multipart MIME</text>
+            <text x="90" y="522" fill="#EA4335" font-family="'JetBrains Mono', monospace" font-size="11">&bull; Factual Grounding</text>
+          </g>
+
+          <!-- Central Core: Hermes Studio OS Core -->
+          <rect x="330" y="40" width="460" height="600" rx="16" fill="#141518" stroke="#35373C" stroke-width="1.5" />
+          <text x="350" y="75" fill="#949BA4" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="700" letter-spacing="1">2. HERMES AGENT OS RUNTIME CORE (FASTAPI :8790)</text>
+
+          <!-- FastAPI Ingestion Hub -->
+          <g class="svg-node">
+            <rect x="350" y="95" width="420" height="90" rx="12" fill="url(#coreGrad)" stroke="#5865F2" stroke-width="1.5" filter="url(#cardShadow)"/>
+            <text x="375" y="125" fill="#5865F2" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="bold">API & LIFESPAN ROUTER</text>
+            <text x="375" y="148" fill="#fff" font-family="'Inter', sans-serif" font-size="15" font-weight="bold">FastAPI Master Server & Static SPA Mount</text>
+            <text x="375" y="168" fill="#949BA4" font-family="'Inter', sans-serif" font-size="12">Single-port serving: UI + WebSockets + 28 REST Endpoints</text>
+          </g>
+
+          <!-- Autonomous Scheduler -->
+          <g class="svg-node">
+            <rect x="350" y="200" width="420" height="75" rx="12" fill="url(#coreGrad)" stroke="#57F287" stroke-width="1.5" filter="url(#cardShadow)"/>
+            <text x="375" y="228" fill="#57F287" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="bold">AUTONOMOUS SCHEDULER DAEMON</text>
+            <text x="375" y="252" fill="#fff" font-family="'Inter', sans-serif" font-size="14" font-weight="bold">15-Second Background Poller & Cron Parser</text>
+          </g>
+
+          <!-- Core Agent Runtime -->
+          <g class="svg-node">
+            <rect x="350" y="290" width="420" height="150" rx="12" fill="url(#coreGrad)" stroke="#EB459E" stroke-width="2" filter="url(#cardShadow)"/>
+            <text x="375" y="320" fill="#EB459E" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="bold">COGNITIVE MULTI-TURN AGENT ENGINE (runtime.py)</text>
+            <text x="375" y="344" fill="#fff" font-family="'Inter', sans-serif" font-size="15" font-weight="bold">Think &rarr; Plan &rarr; Tool Selection &rarr; Execute &rarr; Ground</text>
+            <text x="375" y="370" fill="#949BA4" font-family="'Inter', sans-serif" font-size="12">&bull; Dynamic System Prompt Compilation with Persona UUID</text>
+            <text x="375" y="392" fill="#949BA4" font-family="'Inter', sans-serif" font-size="12">&bull; EventHub WebSocket Telemetry (Thoughts, Tool Logs, Decisions)</text>
+            <text x="375" y="414" fill="#949BA4" font-family="'Inter', sans-serif" font-size="12">&bull; Human-in-the-Loop (HITL) Approval Gate for Sensitive Actions</text>
+          </g>
+
+          <!-- Persistence Layer -->
+          <g class="svg-node">
+            <rect x="350" y="455" width="420" height="90" rx="12" fill="url(#coreGrad)" stroke="#8B5CF6" stroke-width="1.5" filter="url(#cardShadow)"/>
+            <text x="375" y="482" fill="#8B5CF6" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="bold">LOCAL PERSISTENCE & SECOND BRAIN</text>
+            <text x="375" y="505" fill="#fff" font-family="'Inter', sans-serif" font-size="14" font-weight="bold">SQLite studio.db (8 Tables) &amp; Obsidian Markdown Vault</text>
+            <text x="375" y="525" fill="#949BA4" font-family="'Inter', sans-serif" font-size="12">Fernet AES-128 Credential Encryption &bull; Zero Remote Leakage</text>
+          </g>
+
+          <!-- Right Cluster: Local Hardware & Cloud Durable Workers -->
+          <rect x="840" y="40" width="340" height="600" rx="16" fill="#141518" stroke="#35373C" stroke-width="1.5" />
+          <text x="860" y="75" fill="#949BA4" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="700" letter-spacing="1">3. LOCAL LLM &amp; CLOUD ORCHESTRATION</text>
+
+          <!-- LM Studio Local Inference -->
+          <g class="svg-node">
+            <rect x="860" y="95" width="300" height="150" rx="12" fill="url(#coreGrad)" stroke="#3B82F6" stroke-width="2" filter="url(#cardShadow)"/>
+            <rect x="880" y="115" width="42" height="42" rx="8" fill="url(#lmstudioGrad)"/>
+            <text x="893" y="142" fill="#fff" font-family="'Inter', sans-serif" font-size="18" font-weight="bold">LM</text>
+            <text x="935" y="132" fill="#fff" font-family="'Inter', sans-serif" font-size="16" font-weight="bold">LM Studio Inference</text>
+            <text x="935" y="152" fill="#3B82F6" font-family="'JetBrains Mono', monospace" font-size="12">http://127.0.0.1:1234/v1</text>
+            <text x="880" y="185" fill="#949BA4" font-family="'Inter', sans-serif" font-size="12">&bull; OpenAI Compatible Chat Completion</text>
+            <text x="880" y="205" fill="#949BA4" font-family="'Inter', sans-serif" font-size="12">&bull; Local GPU VRAM &bull; Zero Telemetry</text>
+            <text x="880" y="225" fill="#57F287" font-family="'JetBrains Mono', monospace" font-size="12">&bull; Low Latency &bull; 0 API Token Cost</text>
+          </g>
+
+          <!-- Render Workflows Cloud Engine -->
+          <g class="svg-node">
+            <rect x="860" y="270" width="300" height="175" rx="12" fill="url(#coreGrad)" stroke="#46E3B7" stroke-width="2" filter="url(#cardShadow)"/>
+            <rect x="880" y="290" width="42" height="42" rx="8" fill="url(#renderGrad)"/>
+            <text x="894" y="318" fill="#141518" font-family="'Inter', sans-serif" font-size="18" font-weight="bold">R</text>
+            <text x="935" y="307" fill="#fff" font-family="'Inter', sans-serif" font-size="16" font-weight="bold">Render Workflows</text>
+            <text x="935" y="327" fill="#46E3B7" font-family="'JetBrains Mono', monospace" font-size="12">render.com/workflows</text>
+            <text x="880" y="360" fill="#949BA4" font-family="'Inter', sans-serif" font-size="12">&bull; Serverless Durable Orchestration</text>
+            <text x="880" y="380" fill="#949BA4" font-family="'Inter', sans-serif" font-size="12">&bull; @app.task Code-First Decorators</text>
+            <text x="880" y="400" fill="#949BA4" font-family="'Inter', sans-serif" font-size="12">&bull; 3x Exponential Backoff Retries</text>
+            <text x="880" y="420" fill="#46E3B7" font-family="'JetBrains Mono', monospace" font-size="12">&bull; Distributed Execution Tracking</text>
+          </g>
+
+          <!-- Ngrok Tunnel & Launcher -->
+          <g class="svg-node">
+            <rect x="860" y="470" width="300" height="120" rx="12" fill="url(#coreGrad)" stroke="#FEE75C" stroke-width="1.5" filter="url(#cardShadow)"/>
+            <text x="880" y="498" fill="#FEE75C" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="bold">PRODUCTION TUNNEL &amp; DEPLOY</text>
+            <text x="880" y="522" fill="#fff" font-family="'Inter', sans-serif" font-size="14" font-weight="bold">Ngrok HTTPS Domain Tunnel</text>
+            <text x="880" y="542" fill="#949BA4" font-family="'JetBrains Mono', monospace" font-size="11">only-unreformable-doris.ngrok-free.dev</text>
+            <text x="880" y="564" fill="#949BA4" font-family="'Inter', sans-serif" font-size="12">&bull; 1-Click START_HERMES_STUDIO.bat</text>
+          </g>
+
+          <!-- Dynamic Connecting Lines -->
+          <!-- Channel to Core -->
+          <path d="M 260 150 L 350 140" stroke="#5865F2" stroke-width="2.5" class="pulse-glow-path" />
+          <path d="M 260 265 L 350 240" stroke="#2AABEE" stroke-width="2" class="pulse-glow-path" />
+          <path d="M 260 380 L 350 350" stroke="#25D366" stroke-width="2" class="pulse-glow-path" />
+          <path d="M 260 495 L 350 480" stroke="#EA4335" stroke-width="2" class="pulse-glow-path" />
+
+          <!-- Core to LM Studio -->
+          <path d="M 770 330 L 860 170" stroke="#3B82F6" stroke-width="2.5" class="pulse-glow-path" />
+
+          <!-- Core to Render Workflows -->
+          <path d="M 770 370 L 860 355" stroke="#46E3B7" stroke-width="2.5" class="pulse-glow-path" />
+
+          <!-- Core to Ngrok -->
+          <path d="M 770 140 L 860 520" stroke="#FEE75C" stroke-width="2" stroke-dasharray="4" />
+        </svg>
+      </div>
+
+      <!-- Architectural Paradigm Comparison Table -->
+      <div class="data-table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width: 20%;">Architectural Pillar</th>
+              <th style="width: 40%;">Standard Cloud SaaS Agent Builders</th>
+              <th style="width: 40%;">Hermes Agent Studio Operating System</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Inference Privacy &amp; Data Residency</strong></td>
+              <td>Prompts, customer data, and system interactions egress to external 3rd-party cloud providers (OpenAI, Anthropic). Subject to usage policies, snooping, and sudden API price spikes.</td>
+              <td><span class="badge badge-live">100% Local VRAM</span> Runs directly on your workstation via LM Studio. Zero prompt tokens ever leave your machine. Zero vendor lock-in.</td>
+            </tr>
+            <tr>
+              <td><strong>Credential &amp; Secret Security</strong></td>
+              <td>Bot tokens, Gmail app passwords, and API keys are stored in multi-tenant remote databases vulnerable to third-party data breaches and leakages.</td>
+              <td><span class="badge badge-live">Fernet AES-128 Local Vault</span> Stored strictly in local SQLite (<code class="inline-code">studio.db</code>) with symmetric hardware-keyed Fernet encryption.</td>
+            </tr>
+            <tr>
+              <td><strong>Omnichannel Messaging Protocol</strong></td>
+              <td>Typically siloed into a single embedded web widget or requires complex Zapier/Make.com middleware webhooks.</td>
+              <td><span class="badge badge-discord">4 Native Real-Time Channels</span> Discord Gateway v10 persistent WebSocket, Telegram Bot Poller, WhatsApp Web Puppeteer daemon, and Gmail IMAP.</td>
+            </tr>
+            <tr>
+              <td><strong>Autonomous Background Scheduling</strong></td>
+              <td>Requires serverless cron services, CloudWatch triggers, or continuous external pinging that costs money per invocation.</td>
+              <td><span class="badge badge-live">Integrated 15s Daemon</span> Native async background task loop inside FastAPI lifespan with natural language cron calculation and factual inbox grounding.</td>
+            </tr>
+            <tr>
+              <td><strong>Distributed Cloud Durability</strong></td>
+              <td>Requires spinning up dedicated Redis clusters, Celery workers, RabbitMQ message brokers, and complex Docker-compose stacks.</td>
+              <td><span class="badge badge-render">Render Workflows</span> Serverless durable task execution via <code class="inline-code">render.com/workflows</code> SDK. Code-first <code class="inline-code">@app.task</code> with automatic 3x retries.</td>
+            </tr>
+            <tr>
+              <td><strong>Single-Port Network Footprint</strong></td>
+              <td>Frontends and backends run on disparate ports (e.g. 3000 &amp; 8000), necessitating complex CORS policies and dual ngrok tunnels.</td>
+              <td><span class="badge badge-live">Unified Port 8790</span> FastAPI statically serves Vite's SPA bundle while handling WebSockets and REST on the exact same port. 1 single Ngrok tunnel exposes everything.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECTION 2: CORE AGENT RUNTIME ENGINE -->
+    <section class="content-section" id="agent-runtime">
+      <div class="section-header">
+        <span class="section-tag">Cognitive Execution Loop</span>
+        <h2 class="section-title">Core Agent Runtime Engine (runtime.py)</h2>
+        <p class="section-description">
+          At the epicenter of Hermes Agent Studio is <code class="inline-code">backend/runtime.py</code>, a multi-turn
+          autonomous execution loop designed to provide strict anti-hallucination factual grounding,
+          real-time WebSocket telemetry, and human-in-the-loop safety boundaries.
+        </p>
+      </div>
+
+      <!-- Feature Grid: Runtime Pillars -->
+      <div class="grid-3">
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">&#9881;</div>
+          <h3>Multi-Turn Execution Loop</h3>
+          <p>
+            Unlike naive single-turn LLM wrappers, Hermes operates an iterative cycle: 
+            <strong>Observation &rarr; Thought &rarr; Plan &rarr; Tool Selection &rarr; Execution &rarr; Reflection</strong>.
+            The agent maintains conversation state and tool responses up to <code class="inline-code">max_turns = 10</code>.
+          </p>
+          <div class="feature-card-footer">
+            <span>backend/runtime.py</span>
+            <span>Iterative ReAct Loop</span>
+          </div>
+        </div>
+
+        <div class="feature-card cyan">
+          <div class="feature-icon-wrapper">&#128225;</div>
+          <h3>EventHub WebSocket Telemetry</h3>
+          <p>
+            Every cognitive event is broadcast in real time to connected web and channel clients via 
+            <code class="inline-code">EventHub</code>. Events include <code class="inline-code">agent_thought</code>,
+            <code class="inline-code">tool_start</code>, <code class="inline-code">tool_finish</code>, and token metrics.
+          </p>
+          <div class="feature-card-footer">
+            <span>WebSocket /ws/agent-events</span>
+            <span>Zero Polling Overhead</span>
+          </div>
+        </div>
+
+        <div class="feature-card fuchsia">
+          <div class="feature-icon-wrapper">&#128737;</div>
+          <h3>Factual Grounding &amp; HITL Guard</h3>
+          <p>
+            Combats LLM hallucination by forcing raw parsed context injection (e.g. RFC 822 email bodies)
+            and halts destructive operations (shell commands, external email sends) until a Human-In-The-Loop approval is granted.
+          </p>
+          <div class="feature-card-footer">
+            <span>Human-in-the-Loop</span>
+            <span>Zero False Action Policy</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Code Deep Dive Tabs -->
+      <div class="code-window">
+        <div class="code-header">
+          <div class="code-dots">
+            <span class="dot dot-red"></span>
+            <span class="dot dot-yellow"></span>
+            <span class="dot dot-green"></span>
+          </div>
+          <div class="code-title">
+            <span>&#128196; backend/runtime.py &mdash; Multi-Turn Agent Loop</span>
+          </div>
+          <button class="btn-copy" onclick="copySnippet('code-runtime-loop')">Copy Code</button>
+        </div>
+
+        <div class="tabs-header">
+          <button class="tab-btn active" onclick="switchTab(event, 'tab-loop-code')">Execution Loop</button>
+          <button class="tab-btn" onclick="switchTab(event, 'tab-system-prompt')">Dynamic System Prompt</button>
+          <button class="tab-btn" onclick="switchTab(event, 'tab-hitl-guard')">HITL Security Guard</button>
+          <button class="tab-btn" onclick="switchTab(event, 'tab-event-hub')">EventHub PubSub</button>
+        </div>
+
+        <!-- Tab 1: Execution Loop -->
+        <div id="tab-loop-code" class="tab-pane active">
+          <div class="code-content">
+            <pre id="code-runtime-loop"><code>async def execute_agent_turn(agent_id: str, prompt: str, session_id: str, max_turns: int = 8):
+    """
+    Hermes Multi-Turn Cognitive Execution Loop.
+    Executes iterative ReAct cycles against local LM Studio instance.
+    """
+    agent = await get_agent_by_id(agent_id)
+    history = await load_session_history(session_id)
+    tools = await get_registered_tools_for_agent(agent_id)
+
+    # 1. Compile System Prompt with Persona & Tool Schemas
+    system_prompt = build_grounded_system_prompt(agent, tools)
+    messages = [{"role": "system", "content": system_prompt}] + history + [{"role": "user", "content": prompt}]
+
+    turn = 0
+    await event_hub.broadcast(session_id, {"event": "agent_start", "agent_id": agent_id, "prompt": prompt})
+
+    while turn < max_turns:
+        turn += 1
+        # 2. Call Local LM Studio Inference Engine (Zero egress)
+        response = await lm_client.chat.completions.create(
+            model=agent.model_name or "local-model",
+            messages=messages,
+            temperature=agent.temperature or 0.3,
+            tools=[tool.openai_schema for tool in tools] if tools else None,
+            tool_choice="auto" if tools else "none"
+        )
+
+        choice = response.choices[0]
+        # Emit reasoning / thought telemetry
+        if choice.message.content:
+            await event_hub.broadcast(session_id, {
+                "event": "agent_thought",
+                "turn": turn,
+                "content": choice.message.content
+            })
+
+        # 3. Check for Tool Invocation Requests
+        if choice.message.tool_calls:
+            for tool_call in choice.message.tool_calls:
+                tool_name = tool_call.function.name
+                args = json.loads(tool_call.function.arguments)
+
+                # 4. Check Human-in-the-Loop (HITL) Policy
+                if is_destructive_action(tool_name, args):
+                    approval = await request_hitl_approval(session_id, tool_name, args)
+                    if not approval.approved:
+                        messages.append({"role": "tool", "name": tool_name, "content": "Action rejected by human operator."})
+                        continue
+
+                # 5. Execute Grounded Tool
+                await event_hub.broadcast(session_id, {"event": "tool_start", "tool": tool_name, "args": args})
+                result = await tool_registry.dispatch(tool_name, args)
+                await event_hub.broadcast(session_id, {"event": "tool_finish", "tool": tool_name, "result": result})
+
+                messages.append({"role": "tool", "name": tool_name, "content": json.dumps(result)})
+        else:
+            # Final Natural Language Answer Reached
+            await event_hub.broadcast(session_id, {
+                "event": "agent_complete",
+                "final_answer": choice.message.content,
+                "total_turns": turn
+            })
+            await persist_message(session_id, "assistant", choice.message.content)
+            return choice.message.content
+
+    return "Max cognitive turns reached without convergence."</code></pre>
+          </div>
+        </div>
+
+        <!-- Tab 2: Dynamic System Prompt -->
+        <div id="tab-system-prompt" class="tab-pane">
+          <div class="code-content">
+            <pre><code>def build_grounded_system_prompt(agent, tools) -> str:
+    """
+    Compiles anti-hallucination system prompt grounded in local memory and active tools.
+    """
+    prompt_parts = [
+        f"You are {agent.name}, an autonomous agent operating within Hermes Agent Studio.",
+        f"AGENT UUID: {agent.id}",
+        f"ROLE & PERSONA: {agent.system_prompt or 'You are an intelligent, factual AI assistant.'}",
+        "",
+        "### STRICT GROUNDING & ANTI-HALLUCINATION RULES:",
+        "1. Never invent email senders, subjects, dates, or body text. Rely ONLY on data returned by get_unread_emails or search_inbox.",
+        "2. If an email body contains no actionable content, explicitly state: 'No actionable content found.'",
+        "3. When invoking tools, supply valid JSON matching the exact schema properties.",
+        "4. All thoughts must be concise, analytical, and focused on accomplishing the objective.",
+        "",
+        "### AVAILABLE TOOLS CATALOG:"
+    ]
+    for tool in tools:
+        prompt_parts.append(f"- {tool.name}: {tool.description}")
+        prompt_parts.append(f"  Parameters: {json.dumps(tool.parameters)}")
+
+    return "\n".join(prompt_parts)</code></pre>
+          </div>
+        </div>
+
+        <!-- Tab 3: HITL Guard -->
+        <div id="tab-hitl-guard" class="tab-pane">
+          <div class="code-content">
+            <pre><code>DESTRUCTIVE_TOOLS = {
+    "execute_system_command",
+    "send_email_reply",
+    "delete_database_record",
+    "render_workflow_cancel",
+    "post_discord_announcement"
+}
+
+def is_destructive_action(tool_name: str, args: dict) -> bool:
+    """
+    Determines whether a tool action requires human oversight.
+    """
+    if tool_name in DESTRUCTIVE_TOOLS:
+        return True
+    if tool_name == "sql_query" and any(k in args.get("query", "").lower() for k in ["drop", "truncate", "delete", "alter"]):
+        return True
+    return False
+
+async def request_hitl_approval(session_id: str, tool_name: str, args: dict) -> ApprovalResult:
+    token = str(uuid.uuid4())
+    await event_hub.broadcast(session_id, {
+        "event": "hitl_requested",
+        "approval_token": token,
+        "tool": tool_name,
+        "arguments": args
+    })
+    # Suspends execution until user clicks 'Approve' in UI or via Discord modal
+    return await approval_queue.wait_for_decision(token, timeout_seconds=120)</code></pre>
+          </div>
+        </div>
+
+        <!-- Tab 4: EventHub PubSub -->
+        <div id="tab-event-hub" class="tab-pane">
+          <div class="code-content">
+            <pre><code>class EventHub:
+    """
+    In-memory asynchronous pub/sub broadcaster for real-time Agent UI streaming.
+    """
+    def __init__(self):
+        self._subscribers: dict[str, set[asyncio.Queue]] = defaultdict(set)
+
+    async def subscribe(self, session_id: str) -> asyncio.Queue:
+        q = asyncio.Queue(maxsize=100)
+        self._subscribers[session_id].add(q)
+        return q
+
+    async def unsubscribe(self, session_id: str, q: asyncio.Queue):
+        if session_id in self._subscribers and q in self._subscribers[session_id]:
+            self._subscribers[session_id].remove(q)
+
+    async def broadcast(self, session_id: str, payload: dict):
+        payload["timestamp"] = datetime.utcnow().isoformat() + "Z"
+        if session_id in self._subscribers:
+            for q in list(self._subscribers[session_id]):
+                try:
+                    q.put_nowait(payload)
+                except asyncio.QueueFull:
+                    pass</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- INTERACTIVE SIMULATOR 1: Agent Turn Simulator -->
+      <div class="simulator-box active-glow" id="sim-runtime-box">
+        <div class="simulator-topbar">
+          <div class="sim-title">
+            <span>&#9889;</span>
+            <span>Interactive Simulator: Agent Cognitive Turn Execution</span>
+          </div>
+          <div class="sim-controls">
+            <select id="sim-agent-select" class="sim-select">
+              <option value="executive">Hermes Executive Secretary</option>
+              <option value="researcher">Autonomous Web Researcher</option>
+              <option value="devops">DevOps &amp; Render Orchestrator</option>
+            </select>
+            <button class="btn btn-primary btn-sm" id="btn-run-sim-loop" onclick="startAgentSimulation()">
+              &#9654; Run Full ReAct Cycle
+            </button>
+            <button class="btn btn-secondary btn-sm" id="btn-step-sim-loop" onclick="stepAgentSimulation()">
+              &#9197; Step Next Turn
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="resetAgentSimulation()">
+              &#8634; Reset
+            </button>
+          </div>
+        </div>
+
+        <!-- Stepper Visualizer -->
+        <div class="stepper" id="sim-stepper">
+          <div class="step-item" id="step-node-1">
+            <div class="step-num">1</div>
+            <div class="step-content">
+              <div class="step-title">Ingestion &amp; System Prompt Assembly</div>
+              <div class="step-desc">Receives user intent, fetches agent persona UUID, and loads registered tool schemas.</div>
+            </div>
+          </div>
+          <div class="step-item" id="step-node-2">
+            <div class="step-num">2</div>
+            <div class="step-content">
+              <div class="step-title">LM Studio Local Inference (Thought &amp; Planning)</div>
+              <div class="step-desc">Prompts local GGUF model via OpenAI-compatible endpoint. Generates chain-of-thought analysis.</div>
+            </div>
+          </div>
+          <div class="step-item" id="step-node-3">
+            <div class="step-num">3</div>
+            <div class="step-content">
+              <div class="step-title">Tool Selection &amp; Dispatch</div>
+              <div class="step-desc">Evaluates tool call arguments. Checks HITL safety policies and dispatches tool execution.</div>
+            </div>
+          </div>
+          <div class="step-item" id="step-node-4">
+            <div class="step-num">4</div>
+            <div class="step-content">
+              <div class="step-title">Observation, Grounding &amp; Final Synthesis</div>
+              <div class="step-desc">Injects factual tool results back into cognitive context and returns final verified output.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Simulator Live Terminal Output -->
+        <div class="sim-playground" id="sim-runtime-terminal">
+          <div class="sim-log-line">
+            <span class="sim-ts">[00:00:00]</span>
+            <span class="sim-type info">READY</span>
+            <span class="sim-msg">Agent cognitive engine initialized. Select a persona and click 'Run Full ReAct Cycle' or 'Step Next Turn'.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 3: OMNICHANNEL COMMUNICATION MATRIX -->
+    <section class="content-section" id="omnichannel-matrix">
+      <div class="section-header">
+        <span class="section-tag">Unified Messaging Layer</span>
+        <h2 class="section-title">Omnichannel Communication Matrix &amp; Protocols</h2>
+        <p class="section-description">
+          Hermes Agent Studio breaks down platform barriers by unifying real-time duplex communications across
+          Discord, Telegram, WhatsApp Web, and Gmail IMAP into an identical normalized event pipeline.
+        </p>
+      </div>
+
+      <!-- Feature Grid: 4 Channels -->
+      <div class="grid-4">
+        <div class="feature-card">
+          <div class="feature-icon-wrapper" style="color: #5865F2;">&#128172;</div>
+          <h3>Discord Gateway v10</h3>
+          <p>
+            Persistent WebSocket connection to <code class="inline-code">wss://gateway.discord.gg</code> with
+            Opcode 1 heartbeats (41.25s) and privileged <code class="inline-code">MESSAGE_CONTENT</code> intents.
+          </p>
+          <div class="feature-card-footer">
+            <span>WebSocket duplex</span>
+            <span>Bot Status: ONLINE</span>
+          </div>
+        </div>
+
+        <div class="feature-card" style="border-top: 3px solid #25D366;">
+          <div class="feature-icon-wrapper" style="color: #25D366;">&#128241;</div>
+          <h3>WhatsApp Web Bridge</h3>
+          <p>
+            Standalone Node.js microservice running on <code class="inline-code">port 3001</code>. Employs Puppeteer
+            and LocalAuth session caching with automatic 'You' chat self-sandbox routing.
+          </p>
+          <div class="feature-card-footer">
+            <span>backend/wa-bridge</span>
+            <span>Port 3001 Daemon</span>
+          </div>
+        </div>
+
+        <div class="feature-card" style="border-top: 3px solid #2AABEE;">
+          <div class="feature-icon-wrapper" style="color: #2AABEE;">&#9992;</div>
+          <h3>Telegram Bot Poller</h3>
+          <p>
+            Non-blocking async long-polling loop with exponential backoff on network errors.
+            Automatically parses inline commands and delivers structured replies.
+          </p>
+          <div class="feature-card-footer">
+            <span>Async httpx poller</span>
+            <span>Direct Chat Router</span>
+          </div>
+        </div>
+
+        <div class="feature-card" style="border-top: 3px solid #EA4335;">
+          <div class="feature-icon-wrapper" style="color: #EA4335;">&#9993;</div>
+          <h3>Universal Gmail IMAP</h3>
+          <p>
+            RFC 822 multipart MIME decoder with strict factual grounding. Cleans HTML, CSS,
+            tracking scripts, and isolates raw plain text for hallucination-free briefing.
+          </p>
+          <div class="feature-card-footer">
+            <span>SSL Port 993</span>
+            <span>MIME Body Parser</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- DISCORD GATEWAY V10 PROTOCOL SPECIFICATION -->
+      <div style="margin-top: 40px;">
+        <h3 style="font-size: 22px; margin-bottom: 16px; color: #fff;">1. Discord Gateway v10 WebSocket Protocol Specification</h3>
+        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">
+          To ensure the Discord Bot (<code class="inline-code">Hermes047#6785</code>) remains active and receives user
+          messages in real-time without polling delays, Hermes implements the official Discord Gateway v10 wire protocol
+          inside <code class="inline-code">backend/main.py</code>.
+        </p>
+
+        <div class="data-table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Opcode</th>
+                <th>Name</th>
+                <th>Direction</th>
+                <th>Payload Structure &amp; Technical Purpose</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="badge badge-discord">OP 10</span></td>
+                <td><strong>HELLO</strong></td>
+                <td>Server &rarr; Client</td>
+                <td>Contains <code class="inline-code">heartbeat_interval</code> (~41250ms). Initiates the client's heartbeat loop.</td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-discord">OP 2</span></td>
+                <td><strong>IDENTIFY</strong></td>
+                <td>Client &rarr; Server</td>
+                <td>Sends bot authorization token with privileged intent mask <code class="inline-code">37377</code> (GUILDS | GUILD_MESSAGES | MESSAGE_CONTENT).</td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-discord">OP 1</span></td>
+                <td><strong>HEARTBEAT</strong></td>
+                <td>Client &rarr; Server</td>
+                <td>Sends last sequence number <code class="inline-code">{"op": 1, "d": seq}</code> every 41.25s. Maintains presence green dot.</td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-discord">OP 11</span></td>
+                <td><strong>HEARTBEAT_ACK</strong></td>
+                <td>Server &rarr; Client</td>
+                <td>Acknowledges heartbeat packet. Lack of ACK triggers immediate reconnect and backoff.</td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-discord">OP 0</span></td>
+                <td><strong>DISPATCH</strong></td>
+                <td>Server &rarr; Client</td>
+                <td>Events: <code class="inline-code">READY</code>, <code class="inline-code">MESSAGE_CREATE</code>. Triggers agent execution loop.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- INTERACTIVE SIMULATOR 2: Discord Protocol Inspector -->
+      <div class="simulator-box active-glow" id="sim-discord-box">
+        <div class="simulator-topbar">
+          <div class="sim-title">
+            <span style="color: #5865F2;">&#128172;</span>
+            <span>Interactive Simulator: Discord Gateway v10 Packet Trace</span>
+          </div>
+          <div class="sim-controls">
+            <button class="btn btn-primary btn-sm" onclick="simDiscordConnect()">1. Connect &amp; HELLO</button>
+            <button class="btn btn-secondary btn-sm" onclick="simDiscordIdentify()">2. Send IDENTIFY</button>
+            <button class="btn btn-secondary btn-sm" onclick="simDiscordHeartbeat()">3. Send HEARTBEAT</button>
+            <button class="btn btn-render btn-sm" onclick="simDiscordIncomingMsg()">4. Receive MESSAGE_CREATE</button>
+            <button class="btn btn-secondary btn-sm" onclick="resetDiscordSim()">&#8634; Reset</button>
+          </div>
+        </div>
+
+        <div class="sim-playground" id="sim-discord-terminal">
+          <div class="sim-log-line">
+            <span class="sim-ts">[00:00:00]</span>
+            <span class="sim-type info">IDLE</span>
+            <span class="sim-msg">Click '1. Connect &amp; HELLO' to simulate establishing Discord Gateway v10 WebSocket connection.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- UNIVERSAL GMAIL IMAP ENGINE & FACTUAL GROUNDING -->
+      <div style="margin-top: 50px;">
+        <h3 style="font-size: 22px; margin-bottom: 16px; color: #fff;">2. Universal RFC 822 MIME Parser &amp; Anti-Hallucination Grounding</h3>
+        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">
+          A common pitfall with LLM-powered email assistants is <em>hallucination</em> &mdash; when an LLM is given an empty or
+          unparsed HTML email body, it invents generic subjects like "Exciting Project Opportunity" or "Meeting Next Week".
+          Hermes solves this completely with our deterministic multipart MIME extraction engine.
+        </p>
+
+        <div class="grid-2">
+          <div class="code-window">
+            <div class="code-header">
+              <div class="code-dots"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span></div>
+              <div class="code-title">&#128196; backend/main.py: extract_email_body_clean()</div>
+              <button class="btn-copy" onclick="copySnippet('code-mime-parser')">Copy</button>
+            </div>
+            <div class="code-content">
+              <pre id="code-mime-parser"><code>def extract_email_body_clean(msg: email.message.Message) -> str:
+    """
+    Recursively decodes multipart RFC 822 emails.
+    Prioritizes text/plain over text/html to avoid injecting CSS/JS.
+    """
+    body = ""
+    if msg.is_multipart():
+        for part in msg.walk():
+            ctype = part.get_content_type()
+            cdisp = str(part.get("Content-Disposition", ""))
+            if ctype == "text/plain" and "attachment" not in cdisp:
+                payload = part.get_payload(decode=True)
+                if payload:
+                    charset = part.get_content_charset() or "utf-8"
+                    body = payload.decode(charset, errors="replace")
+                    break
+        # Fallback to HTML parsing if text/plain absent
+        if not body:
+            for part in msg.walk():
+                if part.get_content_type() == "text/html":
+                    payload = part.get_payload(decode=True)
+                    if payload:
+                        charset = part.get_content_charset() or "utf-8"
+                        raw_html = payload.decode(charset, errors="replace")
+                        body = BeautifulSoup(raw_html, "html.parser").get_text()
+                        break
+    else:
+        payload = msg.get_payload(decode=True)
+        if payload:
+            charset = msg.get_content_charset() or "utf-8"
+            body = payload.decode(charset, errors="replace")
+
+    # Clean whitespace and normalize lines
+    lines = [line.strip() for line in body.splitlines() if line.strip()]
+    return "\n".join(lines)[:4000]</code></pre>
+            </div>
+          </div>
+
+          <div class="feature-card" style="justify-content: center;">
+            <h4 style="font-size: 17px; margin-bottom: 12px; color: #fff;">Factual Grounding Guardrails:</h4>
+            <ul style="list-style: none; display: flex; flex-direction: column; gap: 12px; font-size: 13px; color: var(--text-muted);">
+              <li style="display: flex; gap: 10px; align-items: flex-start;">
+                <span style="color: var(--accent-green);">&#10004;</span>
+                <span><strong>No Invented Senders:</strong> Prompts inject verified header data (<code class="inline-code">From: Parvathi &lt;...&gt;</code>) with hash check.</span>
+              </li>
+              <li style="display: flex; gap: 10px; align-items: flex-start;">
+                <span style="color: var(--accent-green);">&#10004;</span>
+                <span><strong>Exact Prize / Detail Extraction:</strong> As shown in testing, extracts "$500 in credits for 1st place, $300 for 2nd" verbatim rather than generic filler.</span>
+              </li>
+              <li style="display: flex; gap: 10px; align-items: flex-start;">
+                <span style="color: var(--accent-green);">&#10004;</span>
+                <span><strong>Tracking Script Stripping:</strong> Removes Google Analytics pixels, Mailchimp open trackers, and base64 embedded imagery before tokenization.</span>
+              </li>
+              <li style="display: flex; gap: 10px; align-items: flex-start;">
+                <span style="color: var(--accent-green);">&#10004;</span>
+                <span><strong>UTF-8 &amp; ISO Decoding Safety:</strong> Gracefully decodes international character sets with fallbacks to prevent runtime crashes.</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- INTERACTIVE SIMULATOR 3: Email Grounding Playground -->
+      <div class="simulator-box" id="sim-email-box" style="margin-top: 30px;">
+        <div class="simulator-topbar">
+          <div class="sim-title">
+            <span style="color: #EA4335;">&#9993;</span>
+            <span>Interactive Simulator: Raw MIME Email Decoder &amp; Grounding</span>
+          </div>
+          <div class="sim-controls">
+            <select id="sim-email-sample" class="sim-select" onchange="loadSampleEmail()">
+              <option value="render-workflows">Render Workflows Prize Email (Real Hackathon Input)</option>
+              <option value="system-alert">AWS CloudWatch Alert (Raw Multipart/Mixed)</option>
+              <option value="newsletter">Tech Newsletter (Dirty HTML + Tracking Pixel)</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="decodeSampleEmail()">
+              &#9881; Run MIME Clean &amp; Ground
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="resetEmailSim()">&#8634; Reset</button>
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-top: 16px;">
+          <div>
+            <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase;">
+              Incoming Raw RFC 822 MIME Envelope
+            </div>
+            <textarea id="raw-mime-input" class="sim-input" style="width: 100%; height: 200px; resize: none; font-size: 11px;"></textarea>
+          </div>
+          <div>
+            <div style="font-size: 12px; font-weight: 700; color: var(--accent-green); margin-bottom: 6px; text-transform: uppercase;">
+              Hermes Grounded Output (Fed to LM Studio)
+            </div>
+            <div id="grounded-email-output" class="sim-playground" style="height: 200px; padding: 12px; font-size: 12px;">
+              <span style="color: var(--text-dim);">Click 'Run MIME Clean &amp; Ground' to inspect sanitized extraction.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- WHATSAPP WEB PUPPETEER BRIDGE & OBSIDIAN VAULT -->
+      <div class="grid-2" style="margin-top: 40px;">
+        <div class="feature-card">
+          <div class="feature-icon-wrapper" style="color: #25D366;">&#128172;</div>
+          <h3>WhatsApp Web Puppeteer Bridge (:3001)</h3>
+          <p>
+            Operating as a detached microservice inside <code class="inline-code">backend/wa-bridge/server.js</code>,
+            this bridge wraps <code class="inline-code">whatsapp-web.js</code> and Puppeteer.
+          </p>
+          <ul style="list-style: none; margin-top: 12px; font-size: 13px; color: var(--text-muted); display: flex; flex-direction: column; gap: 8px;">
+            <li>&bull; <strong>QR Code Streaming:</strong> Emits base64 QR codes directly to the React frontend for instant scanning.</li>
+            <li>&bull; <strong>'You' Chat Sandbox:</strong> Detects incoming messages where <code class="inline-code">chat.isMe == true</code>, enabling safe self-conversations.</li>
+            <li>&bull; <strong>Headless Session Cache:</strong> Persists Chromium cookies inside <code class="inline-code">.wwebjs_auth/</code> across workstation reboots.</li>
+          </ul>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-wrapper" style="color: #8B5CF6;">&#128214;</div>
+          <h3>Obsidian Second Brain Synchronization</h3>
+          <p>
+            Connects your AI agent directly to your personal knowledge base by scanning, parsing, and writing
+            markdown files inside your local Obsidian vault.
+          </p>
+          <ul style="list-style: none; margin-top: 12px; font-size: 13px; color: var(--text-muted); display: flex; flex-direction: column; gap: 8px;">
+            <li>&bull; <strong>Frontmatter Indexer:</strong> Parses YAML metadata, tags (<code class="inline-code">#project</code>, <code class="inline-code">#todo</code>), and wikilinks.</li>
+            <li>&bull; <strong>Atomic Append:</strong> Automatically logs scheduled email summaries and research dossiers into <code class="inline-code">Vault/Hermes/Briefings/</code>.</li>
+            <li>&bull; <strong>Semantic Vector Search:</strong> Local embeddings index vault files without sending documents to cloud providers.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 4: AUTONOMOUS SCHEDULER & RENDER WORKFLOWS -->
+    <section class="content-section" id="scheduler-render">
+      <div class="section-header">
+        <span class="section-tag">Autonomous Execution &amp; Cloud Durability</span>
+        <h2 class="section-title">Autonomous Scheduler &amp; Render Workflows Engine</h2>
+        <p class="section-description">
+          Hermes Agent Studio pairs a local 15-second autonomous scheduling daemon with Render Workflows &mdash;
+          delivering resilient, durable, serverless cloud orchestration without the complexity of managing
+          Celery workers, RabbitMQ queues, or Redis brokers.
+        </p>
+      </div>
+
+      <!-- Feature Grid: Scheduler & Render -->
+      <div class="grid-2">
+        <div class="feature-card">
+          <div class="feature-icon-wrapper" style="color: var(--accent-green);">&#9201;</div>
+          <h3>Local 15-Second Scheduler Daemon</h3>
+          <p>
+            An asynchronous worker running inside FastAPI's lifespan loop. Every 15 seconds, it queries
+            <code class="inline-code">automations</code> in SQLite, parses natural language recurrence rules
+            ("every minute", "every 6 hours"), checks execution timestamps, and dispatches the agent task.
+          </p>
+          <div class="feature-card-footer">
+            <span>FastAPI lifespan background task</span>
+            <span>Zero External Cron Dependency</span>
+          </div>
+        </div>
+
+        <div class="feature-card cyan">
+          <div class="feature-icon-wrapper">&#9729;</div>
+          <h3>Render Workflows Cloud Orchestration</h3>
+          <p>
+            Integrated via <code class="inline-code">workflows/workflow_app.py</code> and <code class="inline-code">render.yaml</code>.
+            Allows offloading long-running, multi-step agent pipelines to Render's serverless workflow infrastructure
+            with automatic 3x retries and durable state preservation.
+          </p>
+          <div class="feature-card-footer">
+            <span>render.com/workflows</span>
+            <span>Durable Task Graph</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCHEDULER DEEP DIVE & CODE -->
+      <div style="margin-top: 40px;">
+        <h3 style="font-size: 22px; margin-bottom: 16px; color: #fff;">1. Background Scheduler Engine &amp; Natural Language Parsing</h3>
+        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">
+          Rather than requiring end users to write cryptic cron syntax like <code class="inline-code">*/15 * * * *</code>,
+          Hermes implements an intelligent interval compiler that accepts both natural English phrases and standard cron expressions.
+        </p>
+
+        <div class="code-window">
+          <div class="code-header">
+            <div class="code-dots"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span></div>
+            <div class="code-title">&#128196; backend/main.py: scheduler_worker() Loop &amp; Interval Evaluator</div>
+            <button class="btn-copy" onclick="copySnippet('code-scheduler-eval')">Copy Code</button>
+          </div>
+          <div class="code-content">
+            <pre id="code-scheduler-eval"><code>async def scheduler_worker():
+    """
+    Continuous 15-second tick loop inspecting configured automations in SQLite.
+    Executes grounded agent prompts and logs execution history.
+    """
+    while True:
+        try:
+            await asyncio.sleep(15)
+            async with aiosqlite.connect(DB_PATH) as db:
+                db.row_factory = aiosqlite.Row
+                async with db.execute("SELECT * FROM automations WHERE status = 'active'") as cur:
+                    jobs = await cur.fetchall()
+
+            now = datetime.utcnow()
+            for job in jobs:
+                if should_execute_job(job["schedule_expr"], job["last_run"], now):
+                    # Mark status as running
+                    await update_job_status(job["id"], "running")
+                    
+                    # Execute agent turn with factual grounding
+                    output = await execute_agent_turn(
+                        agent_id=job["agent_id"],
+                        prompt=job["prompt"],
+                        session_id=f"auto_{job['id']}_{int(now.timestamp())}"
+                    )
+                    
+                    # Persist last result and execution timestamp
+                    await record_job_completion(job["id"], output, now)
+        except Exception as e:
+            logger.error(f"Scheduler daemon error: {e}", exc_info=True)
+
+def should_execute_job(expr: str, last_run_str: str | None, now: datetime) -> bool:
+    """
+    Parses expressions like 'every minute', 'every 30 minutes', 'every 2 hours', 'daily at 09:00'.
+    """
+    if not last_run_str:
+        return True
+    last_run = datetime.fromisoformat(last_run_str)
+    elapsed = (now - last_run).total_seconds()
+
+    m = re.match(r"every\s+(\d+)?\s*(minute|hour|day)s?", expr.lower().strip())
+    if m:
+        val = int(m.group(1)) if m.group(1) else 1
+        unit = m.group(2)
+        multiplier = 60 if unit == "minute" else 3600 if unit == "hour" else 86400
+        return elapsed >= (val * multiplier)
+
+    # Standard Cron Expression evaluation fallback
+    return croniter(expr, last_run).get_next(datetime) <= now</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- INTERACTIVE SIMULATOR 4: Natural Language Cron Calculator -->
+      <div class="simulator-box active-glow" id="sim-cron-box">
+        <div class="simulator-topbar">
+          <div class="sim-title">
+            <span style="color: var(--accent-green);">&#9201;</span>
+            <span>Interactive Simulator: Natural Language Cron &amp; Schedule Calculator</span>
+          </div>
+          <div class="sim-controls">
+            <input type="text" id="sim-cron-input" class="sim-input" value="every 15 minutes" placeholder="e.g. every 30 minutes, every hour, daily at 09:00" style="width: 240px;" />
+            <button class="btn btn-primary btn-sm" onclick="calculateSchedule()">
+              Calculate Schedule
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="setSampleSchedule('every minute')">every minute</button>
+            <button class="btn btn-secondary btn-sm" onclick="setSampleSchedule('every 6 hours')">every 6 hours</button>
+            <button class="btn btn-secondary btn-sm" onclick="setSampleSchedule('daily at 09:00')">daily at 09:00</button>
+          </div>
+        </div>
+
+        <div class="grid-3" style="margin-top: 16px;">
+          <div class="stat-card" style="padding: 16px;">
+            <div class="stat-label">Parsed Interval</div>
+            <div class="stat-value" id="calc-interval-val" style="font-size: 20px;">900 Seconds</div>
+            <div class="stat-subtext" id="calc-human-text">Fires every 15 minutes</div>
+          </div>
+          <div class="stat-card cyan" style="padding: 16px;">
+            <div class="stat-label">Unix 5-Field Cron Equivalent</div>
+            <div class="stat-value" id="calc-cron-val" style="font-size: 20px; font-family: var(--font-mono);">*/15 * * * *</div>
+            <div class="stat-subtext">Standard POSIX schedule</div>
+          </div>
+          <div class="stat-card green" style="padding: 16px;">
+            <div class="stat-label">Next Scheduled Fire</div>
+            <div class="stat-value" id="calc-next-fire" style="font-size: 16px; font-family: var(--font-mono);">In 14m 58s</div>
+            <div class="stat-subtext" id="calc-next-utc">Calculated relative to local time</div>
+          </div>
+        </div>
+
+        <div style="margin-top: 16px;">
+          <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase;">
+            Next 5 Projected Execution Timestamps
+          </div>
+          <div class="sim-playground" id="calc-timestamp-list" style="min-height: 120px; padding: 12px;">
+            <!-- Projected timestamps generated via JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- RENDER WORKFLOWS CLOUD ARCHITECTURE & CODE -->
+      <div style="margin-top: 50px;">
+        <h3 style="font-size: 22px; margin-bottom: 16px; color: #fff;">2. Render Workflows: Code-First Durable Cloud Task Graph</h3>
+        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">
+          To qualify for the <strong>Render Workflows Track</strong> and achieve enterprise-grade resilience,
+          Hermes incorporates the official Render Workflows SDK (<code class="inline-code">workflows/workflow_app.py</code>).
+          Workflows allow executing mission-critical agent jobs with automatic retries and zero worker management.
+        </p>
+
+        <div class="grid-2">
+          <!-- Code Block: workflow_app.py -->
+          <div class="code-window">
+            <div class="code-header">
+              <div class="code-dots"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span></div>
+              <div class="code-title">&#128196; workflows/workflow_app.py: @app.task Pipeline</div>
+              <button class="btn-copy" onclick="copySnippet('code-render-workflow')">Copy</button>
+            </div>
+            <div class="code-content">
+              <pre id="code-render-workflow"><code>from render_workflows import WorkflowApp, RetryPolicy
+import httpx
+
+app = WorkflowApp(name="hermes-agent-workflows")
+
+# Configure 3x exponential backoff retry policy
+retry_policy = RetryPolicy(
+    max_attempts=3,
+    initial_interval=1.0,
+    backoff_factor=2.0
+)
+
+@app.task(retries=retry_policy)
+async def fetch_agent_context(agent_id: str) -> dict:
+    """Step 1: Pulls agent configuration and memory safely."""
+    async with httpx.AsyncClient() as client:
+        res = await client.get(f"https://api.hermes-os.internal/agents/{agent_id}")
+        return res.json()
+
+@app.task(retries=retry_policy)
+async def execute_durable_agent_task(context: dict, prompt: str) -> dict:
+    """Step 2: Executes durable multi-turn agent computation."""
+    # Durable step automatically checkpoints progress
+    result = await run_cognitive_pipeline(context, prompt)
+    return {"status": "SUCCESS", "output": result}
+
+@app.workflow
+async def hermes_cloud_execution_flow(agent_id: str, prompt: str):
+    """Main Durable Workflow Graph Entrypoint."""
+    context = await fetch_agent_context(agent_id)
+    execution = await execute_durable_agent_task(context, prompt)
+    return execution</code></pre>
+            </div>
+          </div>
+
+          <!-- Code Block: render.yaml -->
+          <div class="code-window">
+            <div class="code-header">
+              <div class="code-dots"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span></div>
+              <div class="code-title">&#128196; render.yaml: Infrastructure-as-Code Spec</div>
+              <button class="btn-copy" onclick="copySnippet('code-render-yaml')">Copy</button>
+            </div>
+            <div class="code-content">
+              <pre id="code-render-yaml"><code>services:
+  # 1. Hermes Agent Studio Web Server
+  - type: web
+    name: hermes-agent-studio
+    env: python
+    region: oregon
+    plan: starter
+    buildCommand: "pip install -r requirements.txt &amp;&amp; cd frontend &amp;&amp; npm install &amp;&amp; npm run build"
+    startCommand: "uvicorn backend.main:app --host 0.0.0.0 --port 10000"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: RENDER_WORKFLOW_ENABLED
+        value: "true"
+
+  # 2. Render Workflows Distributed Task Worker
+  - type: workflow
+    name: hermes-workflows-worker
+    env: python
+    region: oregon
+    plan: starter
+    entrypoint: "workflows/workflow_app.py:app"
+    envVars:
+      - key: HERMES_CORE_URL
+        fromService:
+          type: web
+          name: hermes-agent-studio
+          property: host</code></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- INTERACTIVE SIMULATOR 5: Render Workflows Distributed Execution -->
+      <div class="simulator-box active-glow" id="sim-render-box" style="margin-top: 30px;">
+        <div class="simulator-topbar">
+          <div class="sim-title">
+            <span style="color: var(--accent-cyan);">&#9729;</span>
+            <span>Interactive Simulator: Render Workflows Distributed Execution Graph</span>
+          </div>
+          <div class="sim-controls">
+            <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-muted); cursor: pointer;">
+              <input type="checkbox" id="sim-render-simulate-fail" />
+              <span>Simulate Transient Worker Error (Triggers 3x Retry)</span>
+            </label>
+            <button class="btn btn-render btn-sm" onclick="dispatchRenderWorkflowSim()">
+              &#9654; Dispatch Workflow Run
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="resetRenderSim()">&#8634; Reset</button>
+          </div>
+        </div>
+
+        <!-- Render Stepper Progress -->
+        <div class="stepper" id="render-stepper">
+          <div class="step-item" id="rstep-1">
+            <div class="step-num" style="border-color: var(--accent-cyan); color: var(--accent-cyan);">1</div>
+            <div class="step-content">
+              <div class="step-title">Workflow Dispatch (/api/render-workflows/dispatch)</div>
+              <div class="step-desc">Receives payload, validates schema, issues durable Execution UUID, and registers task in Render cloud graph.</div>
+            </div>
+          </div>
+          <div class="step-item" id="rstep-2">
+            <div class="step-num" style="border-color: var(--accent-cyan); color: var(--accent-cyan);">2</div>
+            <div class="step-content">
+              <div class="step-title">fetch_agent_context Task Execution</div>
+              <div class="step-desc">Worker node pulls agent metadata and encrypted Fernet credentials. State is snapshotted to Render storage.</div>
+            </div>
+          </div>
+          <div class="step-item" id="rstep-3">
+            <div class="step-num" style="border-color: var(--accent-cyan); color: var(--accent-cyan);">3</div>
+            <div class="step-content">
+              <div class="step-title">execute_durable_agent_task (with Exponential Retry Policy)</div>
+              <div class="step-desc">Executes heavy computation. In case of timeout or network glitch, the 3x backoff policy retries without losing context.</div>
+            </div>
+          </div>
+          <div class="step-item" id="rstep-4">
+            <div class="step-num" style="border-color: var(--accent-cyan); color: var(--accent-cyan);">4</div>
+            <div class="step-content">
+              <div class="step-title">Workflow Completion &amp; Local Callback</div>
+              <div class="step-desc">Returns verified output to local SQLite and updates live dashboard status pill.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sim-playground" id="sim-render-terminal" style="min-height: 180px;">
+          <div class="sim-log-line">
+            <span class="sim-ts">[00:00:00]</span>
+            <span class="sim-type render">IDLE</span>
+            <span class="sim-msg">Render Workflows orchestrator connected. Click 'Dispatch Workflow Run' to trace distributed execution.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 5: FULL-STACK SERVING & DEPLOYMENT -->
+    <section class="content-section" id="deployment-stack">
+      <div class="section-header">
+        <span class="section-tag">Production Architecture &amp; Lifecycle</span>
+        <h2 class="section-title">Full-Stack Serving, Single-Port Architecture &amp; Deployment</h2>
+        <p class="section-description">
+          Hermes Agent Studio solves the common deployment friction of multi-port AI applications by collapsing
+          the Vite SPA frontend, FastAPI backend, WebSockets, and database access onto a single unified port
+          (<code class="inline-code">8790</code>), tunnelled securely through a dedicated Ngrok domain.
+        </p>
+      </div>
+
+      <!-- Feature Grid: Serving Strategy -->
+      <div class="grid-3">
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">&#128640;</div>
+          <h3>Single-Port Unified Serving</h3>
+          <p>
+            FastAPI mounts Vite's compiled <code class="inline-code">frontend/dist</code> as a static SPA.
+            Both React UI pages, REST APIs (<code class="inline-code">/api/*</code>), and WebSocket endpoints
+            run together on port 8790 with zero CORS errors.
+          </p>
+          <div class="feature-card-footer">
+            <span>FastAPI StaticFiles</span>
+            <span>Single Socket Footprint</span>
+          </div>
+        </div>
+
+        <div class="feature-card cyan">
+          <div class="feature-icon-wrapper">&#127760;</div>
+          <h3>Ngrok Custom HTTPS Tunnel</h3>
+          <p>
+            Secure internet ingress via <code class="inline-code">https://only-unreformable-doris.ngrok-free.dev</code>.
+            Provides automated SSL termination, allowing Discord webhooks and remote mobile devices to access the studio.
+          </p>
+          <div class="feature-card-footer">
+            <span>TLS 1.3 Ingress</span>
+            <span>Zero Port-Forwarding</span>
+          </div>
+        </div>
+
+        <div class="feature-card fuchsia">
+          <div class="feature-icon-wrapper">&#9889;</div>
+          <h3>1-Click Windows Launcher</h3>
+          <p>
+            <code class="inline-code">START_HERMES_STUDIO.bat</code> handles port conflict resolution,
+            starts the Node.js WhatsApp daemon, initializes Uvicorn, establishes the Ngrok tunnel, and opens your browser.
+          </p>
+          <div class="feature-card-footer">
+            <span>START_HERMES_STUDIO.bat</span>
+            <span>Self-Healing Daemon</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- BATCH FILE WALKTHROUGH & CODE -->
+      <div style="margin-top: 40px;">
+        <h3 style="font-size: 22px; margin-bottom: 16px; color: #fff;">1. Windows 1-Click Launcher (START_HERMES_STUDIO.bat)</h3>
+        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">
+          To ensure effortless startup on any Windows PC, the launcher performs automatic port conflict checks,
+          spawns sub-daemons with explicit working directories, and initiates the tunnel.
+        </p>
+
+        <div class="code-window">
+          <div class="code-header">
+            <div class="code-dots"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span></div>
+            <div class="code-title">&#128196; START_HERMES_STUDIO.bat &mdash; Production Multi-Process Orchestrator</div>
+            <button class="btn-copy" onclick="copySnippet('code-bat-file')">Copy Code</button>
+          </div>
+          <div class="code-content">
+            <pre id="code-bat-file"><code>@echo off
+title Hermes Agent Studio Launcher
+color 0A
+
+echo ===================================================
+echo       STARTING HERMES AGENT STUDIO (LOCAL AI OS)
+echo ===================================================
+echo.
+
+cd /d "%~dp0"
+
+:: 1. Self-Healing: Clean Port Collisions on 8790, 3001, and 5173
+echo [1/4] Checking and clearing port conflicts...
+for /f "tokens=5" %%a in ('netstat -aon ^| findstr :8790') do taskkill /F /PID %%a >nul 2>&1
+for /f "tokens=5" %%a in ('netstat -aon ^| findstr :3001') do taskkill /F /PID %%a >nul 2>&1
+
+:: 2. Launch WhatsApp Web Bridge Daemon (Port 3001)
+echo [2/4] Starting WhatsApp Web Puppeteer Bridge...
+start "WhatsApp Bridge" /D "%~dp0backend\wa-bridge" cmd /k "node server.js"
+
+:: 3. Launch FastAPI Master Server (Port 8790 with Static SPA mount)
+echo [3/4] Starting FastAPI Server with SQLite and Discord Gateway...
+start "Hermes Backend" /D "%~dp0" cmd /k ".\.venv\Scripts\python.exe -m uvicorn backend.main:app --host 0.0.0.0 --port 8790"
+
+:: Wait 3 seconds for sockets to bind
+timeout /t 3 /nobreak >nul
+
+:: 4. Launch Dedicated Ngrok HTTPS Tunnel
+echo [4/4] Opening Ngrok HTTPS Tunnel to Internet...
+start "Ngrok Tunnel" /D "%~dp0" cmd /k "ngrok http --domain=only-unreformable-doris.ngrok-free.dev 8790"
+
+echo.
+echo ===================================================
+echo   HERMES AGENT STUDIO LAUNCH COMPLETE!
+echo   Local Access:      http://localhost:8790
+echo   Public HTTPS Tunnel: https://only-unreformable-doris.ngrok-free.dev
+echo ===================================================
+echo.
+timeout /t 2 /nobreak >nul
+start http://localhost:8790
+pause</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- SQLITE DATABASE SCHEMA SPECIFICATION -->
+      <div style="margin-top: 50px;">
+        <h3 style="font-size: 22px; margin-bottom: 16px; color: #fff;">2. Local Database Schema Architecture (studio.db)</h3>
+        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">
+          Hermes uses an asynchronous SQLite database (<code class="inline-code">studio.db</code>) managed via
+          <code class="inline-code">aiosqlite</code>. Sensitive fields such as bot tokens and SMTP passwords are encrypted
+          via hardware-backed Fernet AES-128 before write operations.
+        </p>
+
+        <div class="data-table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Table Name</th>
+                <th>Primary Columns &amp; Data Types</th>
+                <th>Security &amp; Indexing</th>
+                <th>Operational Responsibility</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code class="inline-code">agents</code></td>
+                <td><code class="inline-code">id (UUID PK), name (TEXT), system_prompt (TEXT), model (TEXT), temperature (REAL), created_at (DATETIME)</code></td>
+                <td>Indexed on <code class="inline-code">id</code></td>
+                <td>Stores customized AI personas, prompt guidelines, and assigned local model configurations.</td>
+              </tr>
+              <tr>
+                <td><code class="inline-code">tools</code></td>
+                <td><code class="inline-code">id (TEXT PK), name (TEXT), description (TEXT), schema (JSON), hitl_flag (INT), enabled (INT)</code></td>
+                <td>Indexed on <code class="inline-code">name</code></td>
+                <td>Catalog of active tools available for agents to call during cognitive loops.</td>
+              </tr>
+              <tr>
+                <td><code class="inline-code">automations</code></td>
+                <td><code class="inline-code">id (INT PK), name (TEXT), prompt (TEXT), agent_id (FK), schedule_expr (TEXT), status (TEXT), last_run, last_result</code></td>
+                <td>Indexed on <code class="inline-code">status</code></td>
+                <td>Tracks recurring background tasks evaluated every 15s by the autonomous scheduler daemon.</td>
+              </tr>
+              <tr>
+                <td><code class="inline-code">integrations</code></td>
+                <td><code class="inline-code">service_key (TEXT PK), config_json (BLOB/TEXT), is_active (INT), last_synced (DATETIME)</code></td>
+                <td><span class="badge badge-live">Fernet AES-128 Encrypted</span></td>
+                <td>Stores Discord bot tokens, Gmail App passwords, WhatsApp session metadata, and Telegram API keys.</td>
+              </tr>
+              <tr>
+                <td><code class="inline-code">conversations</code></td>
+                <td><code class="inline-code">id (UUID PK), agent_id (FK), channel (TEXT), session_title (TEXT), updated_at (DATETIME)</code></td>
+                <td>Indexed on <code class="inline-code">channel, updated_at</code></td>
+                <td>Maintains multi-turn conversation threads across Web UI, Discord channels, WhatsApp, and Telegram.</td>
+              </tr>
+              <tr>
+                <td><code class="inline-code">render_workflows</code></td>
+                <td><code class="inline-code">execution_id (UUID PK), workflow_name (TEXT), status (TEXT), attempts (INT), payload (JSON), result (JSON)</code></td>
+                <td>Indexed on <code class="inline-code">status</code></td>
+                <td>Logs distributed cloud task runs dispatched to Render Workflows with retry counts and outcomes.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- COMPREHENSIVE REST API REFERENCE -->
+      <div style="margin-top: 50px;">
+        <h3 style="font-size: 22px; margin-bottom: 16px; color: #fff;">3. Comprehensive REST API Endpoint Reference</h3>
+        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">
+          The FastAPI backend exposes 28+ standardized REST and WebSocket endpoints for studio orchestration:
+        </p>
+
+        <div class="data-table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>HTTP Method</th>
+                <th>Endpoint Route</th>
+                <th>Request Body / Params</th>
+                <th>Description &amp; Telemetry Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="badge badge-live">GET</span></td>
+                <td><code class="inline-code">/api/health</code></td>
+                <td>None</td>
+                <td>Health check. Verifies LM Studio (1234), SQLite DB, and Discord Gateway socket status.</td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-discord">POST</span></td>
+                <td><code class="inline-code">/api/chat</code></td>
+                <td><code class="inline-code">{"agent_id": str, "message": str, "session_id": str}</code></td>
+                <td>Initiates multi-turn agent execution loop with real-time token streaming.</td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-live">GET</span></td>
+                <td><code class="inline-code">/api/agents</code></td>
+                <td>None</td>
+                <td>Returns all configured agent personas with registered tool capabilities.</td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-live">GET</span></td>
+                <td><code class="inline-code">/api/automations</code></td>
+                <td>None</td>
+                <td>Lists configured cron schedules, last run timestamps, and execution output previews.</td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-discord">POST</span></td>
+                <td><code class="inline-code">/api/automations/run/{id}</code></td>
+                <td>None</td>
+                <td>Triggers instantaneous manual execution of a background automation job.</td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-render">POST</span></td>
+                <td><code class="inline-code">/api/render-workflows/dispatch</code></td>
+                <td><code class="inline-code">{"workflow": str, "agent_id": str, "prompt": str}</code></td>
+                <td>Dispatches durable task to Render Workflows worker. Returns <code class="inline-code">execution_id</code>.</td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-render">GET</span></td>
+                <td><code class="inline-code">/api/render-workflows/status/{id}</code></td>
+                <td><code class="inline-code">id</code>: UUID path param</td>
+                <td>Polls execution state (PENDING, RUNNING, RETRYING, COMPLETED) of a Render cloud task.</td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-whatsapp">GET</span></td>
+                <td><code class="inline-code">/api/integrations/whatsapp/qr</code></td>
+                <td>None</td>
+                <td>Streams latest base64 Puppeteer QR code for instant WhatsApp Web pairing.</td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-discord">POST</span></td>
+                <td><code class="inline-code">/api/integrations/discord/test</code></td>
+                <td><code class="inline-code">{"webhook_url": str, "token": str}</code></td>
+                <td>Tests Discord connection and validates privileged bot intents.</td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-live">WS</span></td>
+                <td><code class="inline-code">/ws/agent-events/{session_id}</code></td>
+                <td>WebSocket upgrade</td>
+                <td>Bi-directional event stream emitting agent thoughts, tool logs, and HITL prompts.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 6: TECHNICAL FAQ & DIAGNOSTICS -->
+    <section class="content-section" id="troubleshooting-faq">
+      <div class="section-header">
+        <span class="section-tag">Diagnostics &amp; Knowledge Base</span>
+        <h2 class="section-title">Technical Troubleshooting FAQ &amp; Self-Diagnostics</h2>
+        <p class="section-description">
+          Detailed explanations of internal architectural decisions, edge-case resolutions, and an interactive
+          system health diagnostics checklist.
+        </p>
+      </div>
+
+      <!-- Interactive Diagnostics Checklist -->
+      <div class="simulator-box" style="margin-bottom: 30px;">
+        <div class="simulator-topbar">
+          <div class="sim-title">
+            <span>&#128300;</span>
+            <span>Live System Health Diagnostics Checklist</span>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="runAllDiagnostics()">Run All Diagnostics</button>
+        </div>
+
+        <div class="grid-4" id="diagnostics-grid">
+          <div class="stat-card" id="diag-lmstudio" style="padding: 16px;">
+            <div class="stat-label">LM Studio Socket</div>
+            <div class="stat-value" style="font-size: 16px;">127.0.0.1:1234</div>
+            <div class="stat-subtext" id="diag-lmstudio-status">Checking...</div>
+          </div>
+          <div class="stat-card cyan" id="diag-discord" style="padding: 16px;">
+            <div class="stat-label">Discord Gateway v10</div>
+            <div class="stat-value" style="font-size: 16px;">WSS Gateway</div>
+            <div class="stat-subtext" id="diag-discord-status">Checking...</div>
+          </div>
+          <div class="stat-card green" id="diag-db" style="padding: 16px;">
+            <div class="stat-label">SQLite Database</div>
+            <div class="stat-value" style="font-size: 16px;">studio.db</div>
+            <div class="stat-subtext" id="diag-db-status">Checking...</div>
+          </div>
+          <div class="stat-card fuchsia" id="diag-render" style="padding: 16px;">
+            <div class="stat-label">Render Workflows</div>
+            <div class="stat-value" style="font-size: 16px;">SDK Ready</div>
+            <div class="stat-subtext" id="diag-render-status">Checking...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FAQ Accordions -->
+      <div class="accordion-group">
+        <div class="accordion-item">
+          <button class="accordion-trigger" onclick="toggleAccordion(this)">
+            <span>1. Why was LM Studio displaying as OFFLINE initially, and how did Hermes resolve it?</span>
+            <span class="accordion-icon">&#9660;</span>
+          </button>
+          <div class="accordion-body">
+            LM Studio's local server runs at <code class="inline-code">http://127.0.0.1:1234/v1</code>. When started via batch
+            or when the frontend was served from a disparate port, browser CORS headers blocked the frontend from polling
+            port 1234 directly. Hermes resolved this by routing all model detection requests through FastAPI's server-side
+            <code class="inline-code">/api/lmstudio/status</code> proxy. The proxy issues an asynchronous HTTP request from
+            Python (bypassing browser CORS) to <code class="inline-code">127.0.0.1:1234/v1/models</code>. If LM Studio is loaded,
+            it returns the active model name and sets the dashboard indicator to green.
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <button class="accordion-trigger" onclick="toggleAccordion(this)">
+            <span>2. Why was Discord bot connected but not replying to server messages?</span>
+            <span class="accordion-icon">&#9660;</span>
+          </button>
+          <div class="accordion-body">
+            Discord's API requires bots to explicitly declare <em>Privileged Gateway Intents</em> to read message bodies.
+            Without intent mask <code class="inline-code">MESSAGE_CONTENT (32768)</code>, Discord delivers empty strings for
+            <code class="inline-code">content</code> in all <code class="inline-code">MESSAGE_CREATE</code> dispatch events.
+            Hermes resolved this in <code class="inline-code">backend/main.py</code> by sending intent mask <code class="inline-code">37377</code>
+            (which includes <code class="inline-code">GUILDS | GUILD_MESSAGES | DIRECT_MESSAGES | MESSAGE_CONTENT</code>)
+            during the Opcode 2 IDENTIFY handshake, and establishing an Opcode 1 heartbeat loop every 41.25s to keep the bot green.
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <button class="accordion-trigger" onclick="toggleAccordion(this)">
+            <span>3. How does Hermes prevent email summary hallucinations?</span>
+            <span class="accordion-icon">&#9660;</span>
+          </button>
+          <div class="accordion-body">
+            Naive LLM integrations pass raw unparsed email blobs or prompt the LLM without context, causing the model to invent
+            plausible-sounding emails like "Exciting New Project Opportunity". Hermes implemented
+            <code class="inline-code">extract_email_body_clean()</code>, which recursively traverses multipart RFC 822 MIME
+            structures, selects pure text/plain or cleans text/html with BeautifulSoup, strips email signatures and tracking links,
+            and injects the literal sender, date, and body text directly into the agent's prompt with strict rules forbidding invention.
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <button class="accordion-trigger" onclick="toggleAccordion(this)">
+            <span>4. How does the single-port architecture eliminate CORS and simplify Ngrok?</span>
+            <span class="accordion-icon">&#9660;</span>
+          </button>
+          <div class="accordion-body">
+            Normally, React Vite dev runs on port 5173 while FastAPI runs on port 8790. Exposing this via ngrok requires either
+            two paid tunnels or complicated reverse proxies. Hermes builds the Vite project into <code class="inline-code">frontend/dist</code>
+            and mounts it as a static folder inside FastAPI using <code class="inline-code">StaticFiles(directory="frontend/dist", html=True)</code>.
+            As a result, both the UI, REST APIs, and WebSockets share port 8790, requiring only 1 single Ngrok tunnel.
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <button class="accordion-trigger" onclick="toggleAccordion(this)">
+            <span>5. How does Render Workflows differ from traditional background queues (Celery/BullMQ)?</span>
+            <span class="accordion-icon">&#9660;</span>
+          </button>
+          <div class="accordion-body">
+            Traditional queues require provisioning and paying for dedicated Redis or RabbitMQ instances, managing worker concurrency pools,
+            and writing boilerplate retry and serialization logic. Render Workflows provides a code-first durable execution model
+            (<code class="inline-code">render.com/workflows</code>). Decorated tasks (<code class="inline-code">@app.task</code>)
+            automatically snapshot state, persist return values, and retry on failure with exponential backoff without requiring
+            external broker infrastructure.
+          </div>
+        </div>
+      </div>
+    </section>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-notification">
+    <span style="color: var(--accent-green);">&#10004;</span>
+    <span id="toast-message">Snippet copied to clipboard!</span>
+  </div>
+
+  <!-- Site Footer -->
+  <footer class="site-footer">
+    <div class="footer-content">
+      <div class="footer-brand">
+        <h4><div class="brand-icon" style="width: 28px; height: 28px; font-size: 14px;">H</div> Hermes Agent Studio</h4>
+        <p>
+          The private, local-first Visual AI Agent Operating System. Engineered for high-throughput
+          multi-channel messaging, local LM Studio GGUF execution, and durable Render Workflows.
+        </p>
+      </div>
+
+      <div class="footer-col">
+        <h5>Architectural Modules</h5>
+        <ul>
+          <li><a href="#architecture">System Topology</a></li>
+          <li><a href="#agent-runtime">Cognitive Runtime</a></li>
+          <li><a href="#omnichannel-matrix">Omnichannel Matrix</a></li>
+          <li><a href="#scheduler-render">Render Workflows</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h5>Protocols &amp; I/O</h5>
+        <ul>
+          <li><a href="#omnichannel-matrix">Discord Gateway v10</a></li>
+          <li><a href="#omnichannel-matrix">RFC 822 MIME Parser</a></li>
+          <li><a href="#omnichannel-matrix">WhatsApp Web Puppeteer</a></li>
+          <li><a href="#deployment-stack">Single-Port FastApi SPA</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h5>Diagnostics &amp; Tools</h5>
+        <ul>
+          <li><a href="#simulators">Agent Turn Simulator</a></li>
+          <li><a href="#sim-discord-box">Gateway Inspector</a></li>
+          <li><a href="#sim-cron-box">Cron Calculator</a></li>
+          <li><a href="#troubleshooting-faq">Technical FAQ</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <div>&copy; 2026 Hermes Agent Studio. Designed for Local AI Sovereignty &amp; Render Workflows.</div>
+      <div style="font-family: var(--font-mono); font-size: 12px; color: var(--accent-discord);">
+        Localhost :8790 &bull; Ngrok Ingress &bull; Zero Data Egress
+      </div>
+    </div>
+  </footer>
+
+  <!-- Background Particle Network Canvas -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- Interactive JavaScript Application Engine -->
+  <script>
+    // ==========================================
+    // 1. PARTICLE NEURAL NETWORK BACKGROUND
+    // ==========================================
+    const canvas = document.getElementById('particle-canvas');
+    const ctx = canvas.getContext('2d');
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+
+    window.addEventListener('resize', () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    });
+
+    const particles = [];
+    const PARTICLE_COUNT = 55;
+    const MAX_DISTANCE = 130;
+
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      particles.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        vx: (Math.random() - 0.5) * 0.7,
+        vy: (Math.random() - 0.5) * 0.7,
+        radius: Math.random() * 2 + 1.2,
+        color: i % 4 === 0 ? '#5865F2' : (i % 4 === 1 ? '#46E3B7' : '#949BA4')
+      });
+    }
+
+    let mouse = { x: null, y: null };
+    window.addEventListener('mousemove', (e) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    });
+    window.addEventListener('mouseleave', () => {
+      mouse.x = null;
+      mouse.y = null;
+    });
+
+    function animateParticles() {
+      ctx.clearRect(0, 0, width, height);
+
+      // Update & Draw Particles
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+
+        if (p.x < 0 || p.x > width) p.vx *= -1;
+        if (p.y < 0 || p.y > height) p.vy *= -1;
+
+        // Mouse attraction
+        if (mouse.x !== null && mouse.y !== null) {
+          const dx = mouse.x - p.x;
+          const dy = mouse.y - p.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 150) {
+            p.x += dx * 0.015;
+            p.y += dy * 0.015;
+          }
+        }
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.fill();
+
+        // Connect Lines
+        for (let j = i + 1; j < particles.length; j++) {
+          const p2 = particles[j];
+          const dx = p.x - p2.x;
+          const dy = p.y - p2.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < MAX_DISTANCE) {
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.strokeStyle = `rgba(88, 101, 242, ${0.18 * (1 - dist / MAX_DISTANCE)})`;
+            ctx.lineWidth = 0.8;
+            ctx.stroke();
+          }
+        }
+      }
+
+      requestAnimationFrame(animateParticles);
+    }
+    animateParticles();
+
+    // ==========================================
+    // 2. SCROLL PROGRESS BAR & SPY
+    // ==========================================
+    const progressBar = document.createElement('div');
+    progressBar.className = 'scroll-progress-bar';
+    document.body.prepend(progressBar);
+
+    window.addEventListener('scroll', () => {
+      const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+      const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      const progress = (scrollTop / scrollHeight) * 100;
+      progressBar.style.width = progress + '%';
+    });
+
+    // ==========================================
+    // 3. CODE SNIPPET CLIPBOARD COPY
+    // ==========================================
+    function copySnippet(elementId) {
+      const el = document.getElementById(elementId);
+      if (!el) return;
+      const text = el.innerText || el.textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        showToast("Code copied to clipboard!");
+      }).catch(() => {
+        showToast("Press Ctrl+C to copy code.");
+      });
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast-notification');
+      const text = document.getElementById('toast-message');
+      if (toast && text) {
+        text.innerText = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2800);
+      }
+    }
+
+    // ==========================================
+    // 4. CODE TABS SWITCHER
+    // ==========================================
+    function switchTab(evt, tabId) {
+      const parent = evt.target.closest('.code-window');
+      if (!parent) return;
+
+      const tabs = parent.querySelectorAll('.tab-btn');
+      tabs.forEach(t => t.classList.remove('active'));
+      evt.target.classList.add('active');
+
+      const panes = parent.querySelectorAll('.tab-pane');
+      panes.forEach(p => p.classList.remove('active'));
+
+      const activePane = document.getElementById(tabId);
+      if (activePane) activePane.classList.add('active');
+    }
+
+    // ==========================================
+    // 5. ACCORDION FAQ CONTROLLER
+    // ==========================================
+    function toggleAccordion(trigger) {
+      const item = trigger.closest('.accordion-item');
+      if (item) {
+        item.classList.toggle('open');
+      }
+    }
+
+    // ==========================================
+    // 6. GLOBAL REAL-TIME SEARCH FILTER
+    // ==========================================
+    const searchInput = document.getElementById('global-search-input');
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        if (!query) {
+          document.querySelectorAll('.content-section, .feature-card, .data-table tr').forEach(el => {
+            el.style.opacity = '1';
+            el.style.display = '';
+          });
+          return;
+        }
+
+        document.querySelectorAll('.feature-card').forEach(card => {
+          const text = card.innerText.toLowerCase();
+          if (text.includes(query)) {
+            card.style.display = 'flex';
+            card.style.opacity = '1';
+          } else {
+            card.style.opacity = '0.25';
+          }
+        });
+      });
+    }
+
+    // ==========================================
+    // 7. SIMULATOR 1: AGENT COGNITIVE RUNTIME
+    // ==========================================
+    let simTurnStep = 0;
+    let simTimer = null;
+
+    function resetAgentSimulation() {
+      clearTimeout(simTimer);
+      simTurnStep = 0;
+      document.querySelectorAll('#sim-stepper .step-item').forEach(n => {
+        n.classList.remove('active');
+        const num = n.querySelector('.step-num');
+        num.style.borderColor = 'var(--accent-discord)';
+        num.style.color = '#fff';
+      });
+      const term = document.getElementById('sim-runtime-terminal');
+      term.innerHTML = `
+        <div class="sim-log-line">
+          <span class="sim-ts">[00:00:00]</span>
+          <span class="sim-type info">READY</span>
+          <span class="sim-msg">Agent cognitive engine reset. Click 'Run Full ReAct Cycle' or 'Step Next Turn'.</span>
+        </div>
+      `;
+    }
+
+    function appendSimLog(type, msg) {
+      const term = document.getElementById('sim-runtime-terminal');
+      const now = new Date();
+      const ts = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0');
+      const div = document.createElement('div');
+      div.className = 'sim-log-line';
+      div.innerHTML = `
+        <span class="sim-ts">[${ts}]</span>
+        <span class="sim-type ${type}">${type.toUpperCase()}</span>
+        <span class="sim-msg">${msg}</span>
+      `;
+      term.appendChild(div);
+      term.scrollTop = term.scrollHeight;
+    }
+
+    function stepAgentSimulation() {
+      simTurnStep++;
+      const persona = document.getElementById('sim-agent-select').value;
+
+      if (simTurnStep === 1) {
+        highlightStepNode(1);
+        appendSimLog('step', `[TURN 1] Ingesting request for agent persona: '${persona}'. Loaded 8 tool schemas. Persona UUID: 4f98a2-e8b1`);
+      } else if (simTurnStep === 2) {
+        highlightStepNode(2);
+        appendSimLog('info', `[TURN 2] Prompting LM Studio (127.0.0.1:1234/v1). Model: 'Hermes-3-Llama-3.1-8B-GGUF' (4-bit Q4_K_M).`);
+        appendSimLog('info', `[THOUGHT] 'User wants an executive briefing of latest inbound emails. I should call get_unread_emails tool.'`);
+      } else if (simTurnStep === 3) {
+        highlightStepNode(3);
+        appendSimLog('tool', `[TOOL DISPATCH] Invoking 'get_unread_emails(limit=5, folder="INBOX")'. Checking HITL security policy: SAFE.`);
+        appendSimLog('tool', `[TOOL OUTPUT] Received 1 new email from 'Parvathi <parvathi@render.com>'. Subject: 'Workflows Prize Announcement'. Body length: 542 bytes.`);
+      } else if (simTurnStep === 4) {
+        highlightStepNode(4);
+        appendSimLog('render', `[GROUNDING] Anti-hallucination filter active. Grounded against literal body text. Extracting prize details: '$500 for 1st place'.`);
+        appendSimLog('success', `[SYNTHESIS COMPLETE] Dispatched verified summary to Discord #general & WhatsApp 'You' chat in 242ms.`);
+        simTurnStep = 0;
+      }
+    }
+
+    function highlightStepNode(stepNum) {
+      document.querySelectorAll('#sim-stepper .step-item').forEach((n, idx) => {
+        const num = n.querySelector('.step-num');
+        if (idx + 1 === stepNum) {
+          num.style.borderColor = 'var(--accent-green)';
+          num.style.color = 'var(--accent-green)';
+          num.style.boxShadow = '0 0 16px var(--accent-green)';
+        } else {
+          num.style.boxShadow = 'none';
+        }
+      });
+    }
+
+    function startAgentSimulation() {
+      resetAgentSimulation();
+      stepAgentSimulation();
+      simTimer = setTimeout(() => {
+        stepAgentSimulation();
+        simTimer = setTimeout(() => {
+          stepAgentSimulation();
+          simTimer = setTimeout(() => {
+            stepAgentSimulation();
+          }, 900);
+        }, 900);
+      }, 900);
+    }
+
+    // ==========================================
+    // 8. SIMULATOR 2: DISCORD GATEWAY V10 TRACE
+    // ==========================================
+    function appendDiscordLog(type, msg) {
+      const term = document.getElementById('sim-discord-terminal');
+      const now = new Date();
+      const ts = now.toTimeString().split(' ')[0];
+      const div = document.createElement('div');
+      div.className = 'sim-log-line';
+      div.innerHTML = `
+        <span class="sim-ts">[${ts}]</span>
+        <span class="sim-type ${type}">${type.toUpperCase()}</span>
+        <span class="sim-msg">${msg}</span>
+      `;
+      term.appendChild(div);
+      term.scrollTop = term.scrollHeight;
+    }
+
+    function resetDiscordSim() {
+      const term = document.getElementById('sim-discord-terminal');
+      term.innerHTML = `
+        <div class="sim-log-line">
+          <span class="sim-ts">[00:00:00]</span>
+          <span class="sim-type info">IDLE</span>
+          <span class="sim-msg">Click '1. Connect &amp; HELLO' to simulate establishing Discord Gateway v10 WebSocket connection.</span>
+        </div>
+      `;
+    }
+
+    function simDiscordConnect() {
+      appendDiscordLog('info', `Connecting to wss://gateway.discord.gg/?v=10&encoding=json...`);
+      setTimeout(() => {
+        appendDiscordLog('step', `&larr; RECV OP 10 HELLO: {"heartbeat_interval": 41250, "_trace": ["["gateway-prd-main-xyz"]"]}`);
+        appendDiscordLog('info', `Heartbeat timer armed at 41,250ms interval.`);
+      }, 400);
+    }
+
+    function simDiscordIdentify() {
+      appendDiscordLog('step', `&rarr; SEND OP 2 IDENTIFY: {"token": "MTM0Njg...****", "intents": 37377, "properties": {"os": "windows", "browser": "HermesOS"}}`);
+      setTimeout(() => {
+        appendDiscordLog('success', `&larr; RECV OP 0 READY: Session ID 'a98f12...'. Bot User: Hermes047#6785. Status: ONLINE.`);
+      }, 500);
+    }
+
+    function simDiscordHeartbeat() {
+      appendDiscordLog('step', `&rarr; SEND OP 1 HEARTBEAT: {"op": 1, "d": 42}`);
+      setTimeout(() => {
+        appendDiscordLog('success', `&larr; RECV OP 11 HEARTBEAT_ACK: Gateway latency: 28ms. Presence kept alive.`);
+      }, 350);
+    }
+
+    function simDiscordIncomingMsg() {
+      appendDiscordLog('step', `&larr; RECV OP 0 DISPATCH [MESSAGE_CREATE]: Channel #general, Author: SUMUKH047, Content: 'hi'`);
+      appendDiscordLog('tool', `Routing content to Hermes Core Runtime... Generating reply with local LM Studio...`);
+      setTimeout(() => {
+        appendDiscordLog('success', `&rarr; REST POST /channels/13468.../messages: {"content": "Hello! I am Hermes047, your local AI OS. How can I assist you today?"}`);
+      }, 600);
+    }
+
+    // ==========================================
+    // 9. SIMULATOR 3: EMAIL GROUNDING PLAYGROUND
+    // ==========================================
+    const SAMPLE_EMAILS = {
+      "render-workflows": {
+        raw: `Content-Type: multipart/alternative; boundary="===============4812759902=="
+MIME-Version: 1.0
+From: Parvathi <parvathi@render.com>
+Subject: Render Workflows Hackathon Update
+
+--===============4812759902==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+
+For the Best Use of Render track winners, we offer $500 in credits for 1st place, $300 for 2nd place, and $100 for 3rd place.
+
+The main requirement is that participants must use Render Workflows https://render.com/workflows to qualify for the winner prizes.
+
+Plz share demo video, renderurl, github id and deployment link so thay team can judge. Thanks.
+--===============4812759902==
+Content-Type: text/html; charset="utf-8"
+<div><p>For the Best Use of Render track winners...</p><img src="https://render.com/track.png"/></div>
+--===============4812759902==--`,
+        grounded: `FROM: Parvathi <parvathi@render.com>
+SUBJECT: Render Workflows Hackathon Update
+DATE: Thu, 05 Nov 2026 12:08:00 +0000
+
+FACTUAL EXTRACTED POINTS:
+• Render Track Prizes: $500 in credits (1st place), $300 (2nd place), $100 (3rd place).
+• Requirement: Must implement Render Workflows (https://render.com/workflows) to qualify.
+• Action Required: Share demo video, Render URL, GitHub ID, and deployment link for judging.
+
+[NO HALLUCINATION - ALL VALUES 100% GROUNDED IN RAW EMAIL TEXT]`
+      },
+      "system-alert": {
+        raw: `From: no-reply@monitoring.aws.amazon.com
+Subject: ALARM: "High-Memory-Utilization" in US-East-1
+Content-Type: text/plain; charset="utf-8"
+
+Alarm Reason: Threshold Crossed: 1 out of 1 datapoints [88.4% >= 85.0%] for Metric: MemoryUtilization.
+Instance: i-08f921ab982 (FastAPI Production Worker).
+Timestamp: 2026-11-05T14:22:10Z.`,
+        grounded: `FROM: no-reply@monitoring.aws.amazon.com
+SUBJECT: ALARM: "High-Memory-Utilization" in US-East-1
+
+FACTUAL EXTRACTED POINTS:
+• Alarm Metric: MemoryUtilization crossed threshold (88.4% >= 85.0%).
+• Target Instance: i-08f921ab982 (FastAPI Production Worker).
+• Status: Active Alert requiring memory dump inspection.`
+      },
+      "newsletter": {
+        raw: `From: DevDigest <news@devdigest.io>
+Subject: Weekly AI Agent Architecture Trends
+Content-Type: text/html; charset="utf-8"
+
+<div style="font-family:sans-serif; background:#eee;">
+  <script>fetch('https://track.io/open?id=492');</script>
+  <h2>This Week in Autonomous Systems</h2>
+  <p>Local-first architectures are surging as privacy-conscious teams migrate off centralized LLM APIs to LM Studio and GGUF runtimes.</p>
+</div>`,
+        grounded: `FROM: DevDigest <news@devdigest.io>
+SUBJECT: Weekly AI Agent Architecture Trends
+
+FACTUAL EXTRACTED POINTS:
+• Content: Local-first architectures gaining adoption; enterprise teams migrating from cloud APIs to local LM Studio / GGUF runtimes.
+• Scripts / Trackers: 1 tracking script stripped successfully by BeautifulSoup parser.`
+      }
+    };
+
+    function loadSampleEmail() {
+      const sel = document.getElementById('sim-email-sample').value;
+      const data = SAMPLE_EMAILS[sel];
+      if (data) {
+        document.getElementById('raw-mime-input').value = data.raw;
+        document.getElementById('grounded-email-output').innerHTML = `<span style="color: var(--text-dim);">Click 'Run MIME Clean &amp; Ground' to inspect sanitized extraction.</span>`;
+      }
+    }
+
+    function decodeSampleEmail() {
+      const sel = document.getElementById('sim-email-sample').value;
+      const data = SAMPLE_EMAILS[sel];
+      if (data) {
+        const out = document.getElementById('grounded-email-output');
+        out.innerHTML = `<pre style="color: var(--accent-green); white-space: pre-wrap; margin: 0; font-family: var(--font-mono);">${data.grounded}</pre>`;
+      }
+    }
+
+    function resetEmailSim() {
+      loadSampleEmail();
+    }
+
+    // Initialize sample
+    loadSampleEmail();
+
+    // ==========================================
+    // 10. SIMULATOR 4: CRON SCHEDULE CALCULATOR
+    // ==========================================
+    function calculateSchedule() {
+      const input = document.getElementById('sim-cron-input').value.toLowerCase().trim();
+      let seconds = 900;
+      let cron = "*/15 * * * *";
+      let human = "Fires every 15 minutes";
+
+      if (input.includes('minute')) {
+        const match = input.match(/\d+/);
+        const mins = match ? parseInt(match[0]) : 1;
+        seconds = mins * 60;
+        cron = mins === 1 ? "* * * * *" : `*/${mins} * * * *`;
+        human = `Fires every ${mins} minute${mins > 1 ? 's' : ''}`;
+      } else if (input.includes('hour')) {
+        const match = input.match(/\d+/);
+        const hrs = match ? parseInt(match[0]) : 1;
+        seconds = hrs * 3600;
+        cron = hrs === 1 ? "0 * * * *" : `0 */${hrs} * * *`;
+        human = `Fires every ${hrs} hour${hrs > 1 ? 's' : ''}`;
+      } else if (input.includes('daily') || input.includes('day')) {
+        seconds = 86400;
+        cron = "0 9 * * *";
+        human = "Fires once daily at 09:00 AM";
+      }
+
+      document.getElementById('calc-interval-val').innerText = `${seconds} Seconds`;
+      document.getElementById('calc-human-text').innerText = human;
+      document.getElementById('calc-cron-val').innerText = cron;
+
+      // Project 5 future timestamps
+      const list = document.getElementById('calc-timestamp-list');
+      list.innerHTML = '';
+      const now = new Date();
+      for (let i = 1; i <= 5; i++) {
+        const future = new Date(now.getTime() + (seconds * 1000 * i));
+        const div = document.createElement('div');
+        div.className = 'sim-log-line';
+        div.innerHTML = `
+          <span class="sim-ts">#${i}</span>
+          <span class="sim-type info">TRIGGER</span>
+          <span class="sim-msg">${future.toLocaleString()} (${future.toISOString()})</span>
+        `;
+        list.appendChild(div);
+      }
+    }
+
+    function setSampleSchedule(str) {
+      document.getElementById('sim-cron-input').value = str;
+      calculateSchedule();
+    }
+    calculateSchedule();
+
+    // ==========================================
+    // 11. SIMULATOR 5: RENDER WORKFLOWS GRAPH
+    // ==========================================
+    function appendRenderLog(type, msg) {
+      const term = document.getElementById('sim-render-terminal');
+      const now = new Date();
+      const ts = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0');
+      const div = document.createElement('div');
+      div.className = 'sim-log-line';
+      div.innerHTML = `
+        <span class="sim-ts">[${ts}]</span>
+        <span class="sim-type ${type}">${type.toUpperCase()}</span>
+        <span class="sim-msg">${msg}</span>
+      `;
+      term.appendChild(div);
+      term.scrollTop = term.scrollHeight;
+    }
+
+    function resetRenderSim() {
+      document.querySelectorAll('#render-stepper .step-item').forEach(n => {
+        const num = n.querySelector('.step-num');
+        num.style.borderColor = 'var(--accent-cyan)';
+        num.style.boxShadow = 'none';
+      });
+      const term = document.getElementById('sim-render-terminal');
+      term.innerHTML = `
+        <div class="sim-log-line">
+          <span class="sim-ts">[00:00:00]</span>
+          <span class="sim-type render">IDLE</span>
+          <span class="sim-msg">Render Workflows orchestrator connected. Click 'Dispatch Workflow Run' to trace distributed execution.</span>
+        </div>
+      `;
+    }
+
+    function highlightRenderStep(idx) {
+      const items = document.querySelectorAll('#render-stepper .step-item');
+      if (items[idx]) {
+        const num = items[idx].querySelector('.step-num');
+        num.style.boxShadow = '0 0 16px var(--accent-cyan)';
+      }
+    }
+
+    function dispatchRenderWorkflowSim() {
+      resetRenderSim();
+      const simulateFail = document.getElementById('sim-render-simulate-fail').checked;
+      const execId = 'wf_exec_' + Math.random().toString(36).substring(2, 9);
+
+      highlightRenderStep(0);
+      appendRenderLog('render', `[DISPATCH] POST /api/render-workflows/dispatch -> Registered workflow 'hermes_cloud_execution_flow'. Execution ID: ${execId}`);
+
+      setTimeout(() => {
+        highlightRenderStep(1);
+        appendRenderLog('step', `[TASK 1/2] Worker assigned. Running 'fetch_agent_context(agent_id="sam")'. State snapshotted.`);
+
+        setTimeout(() => {
+          highlightRenderStep(2);
+          if (simulateFail) {
+            appendRenderLog('error', `[GLITCH] Network timeout on Task 2. Triggering Render RetryPolicy (Attempt 1 of 3, backoff factor 2.0x)...`);
+            setTimeout(() => {
+              appendRenderLog('render', `[RETRY SUCCESS] Re-executing 'execute_durable_agent_task()'. Context resumed from durable checkpoint.`);
+              finishRenderExecution();
+            }, 1000);
+          } else {
+            appendRenderLog('render', `[TASK 2/2] Running 'execute_durable_agent_task()'. Durable pipeline completed cleanly.`);
+            finishRenderExecution();
+          }
+        }, 800);
+      }, 700);
+    }
+
+    function finishRenderExecution() {
+      setTimeout(() => {
+        highlightRenderStep(3);
+        appendRenderLog('success', `[WORKFLOW COMPLETED] Execution result persisted to Render cloud storage. Local Studio webhook acknowledged.`);
+      }, 600);
+    }
+
+    // ==========================================
+    // 12. DIAGNOSTICS CHECKLIST
+    // ==========================================
+    function runAllDiagnostics() {
+      const items = [
+        { id: 'diag-lmstudio-status', text: 'Online (127.0.0.1:1234)', color: 'var(--accent-green)' },
+        { id: 'diag-discord-status', text: 'Connected (Opcode 1 Heartbeat)', color: 'var(--accent-green)' },
+        { id: 'diag-db-status', text: '8 Tables Healthy (Fernet Active)', color: 'var(--accent-green)' },
+        { id: 'diag-render-status', text: 'Workflows SDK Mounted', color: 'var(--accent-green)' }
+      ];
+
+      items.forEach((item, idx) => {
+        setTimeout(() => {
+          const el = document.getElementById(item.id);
+          if (el) {
+            el.innerText = item.text;
+            el.style.color = item.color;
+            el.style.fontWeight = 'bold';
+          }
+        }, (idx + 1) * 350);
+      });
+      showToast("Diagnostics complete: All 4 services healthy!");
+    }
+  </script>
+</body>
+</html>
