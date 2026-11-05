@@ -41,7 +41,7 @@ from .runtime import Runtime
 from .hermes import Hermes
 from .security import secrets, hash_password, verify_password, create_access_token, verify_access_token
 from .tools import TOOLS, INTEGRATIONS, get_obsidian_vault_path
-from .integrations import test_integration, whatsapp_send, telegram_send, email_send, email_search, decode_mime_words
+from .integrations import test_integration, whatsapp_send, telegram_send, email_send, email_search, decode_mime_words, discord_send
 import email
 from email.header import decode_header
 import imaplib
@@ -903,6 +903,105 @@ async def dispatch_telegram_direct_llm(chat_id: str, sender_name: str, body: str
         logger.error(f"Direct LLM Telegram reply error: {e}")
 
 
+
+# ==============================================================================
+# Discord Bot Dispatcher & Gateway Worker
+# ==============================================================================
+
+DISCORD_SESSIONS: Dict[str, List[Dict[str, str]]] = {}
+
+async def dispatch_discord_agent(agent_id: str, channel_id: str, sender_name: str, body: str, cfg: Dict[str, Any]):
+    """Executes the agent runtime for an incoming Discord message and sends the reply."""
+    run_id = uuid.uuid4().hex[:16]
+    logger.info(f"Dispatching Discord message from '{sender_name}' in channel '{channel_id}' to agent {agent_id} (run_id: {run_id})")
+
+    history = DISCORD_SESSIONS.setdefault(channel_id, [])
+    history.append({"role": "user", "content": body.strip()})
+    if len(history) > 10:
+        history = history[-10:]
+        DISCORD_SESSIONS[channel_id] = history
+
+    recent_context = ""
+    if len(history) > 1:
+        prev_lines = []
+        for turn in history[:-1]:
+            label = sender_name if turn["role"] == "user" else "Hermes"
+            prev_lines.append(f"{label}: {turn['content']}")
+        recent_context = "Recent conversation:\n" + "\n".join(prev_lines[-4:]) + "\n\n"
+
+    user_message = (
+        f"{recent_context}Incoming Discord message from {sender_name}: \"{body.strip()}\"\n"
+        f"Please reply helpfully, concisely, and naturally to {sender_name}:"
+    )
+
+    task_key = f"{agent_id}_{run_id}"
+    try:
+        task = asyncio.create_task(runtime.execute(agent_id, run_id, user_message, simulation=False))
+        runtime.tasks[task_key] = task
+        try:
+            await task
+        finally:
+            if task_key in runtime.tasks:
+                del runtime.tasks[task_key]
+
+        db = SessionLocal()
+        try:
+            run_rec = db.get(Run, run_id)
+            if not run_rec:
+                return
+
+            tool_events = db.query(RunEvent).filter(
+                RunEvent.run_id == run_id,
+                RunEvent.kind == "tool_result"
+            ).all()
+
+            discord_called = any(
+                "discord" in (ev.message or "").lower() or "discord" in (ev.payload or "").lower()
+                for ev in tool_events
+            )
+
+            if not discord_called and run_rec.result and run_rec.result.strip():
+                reply_text = clean_llm_reply(run_rec.result)
+                history.append({"role": "assistant", "content": reply_text})
+                logger.info(f"Sending agent's response to Discord channel {channel_id}...")
+                await discord_send(cfg, target=channel_id, text=reply_text)
+                logger.info(f"Discord response successfully delivered to channel {channel_id}!")
+            elif not discord_called and (not run_rec.result or not run_rec.result.strip()):
+                logger.warning(f"Agent {agent_id} yielded empty response, falling back to direct LLM...")
+                await dispatch_discord_direct_llm(channel_id, sender_name, body, cfg)
+            elif discord_called:
+                history.append({"role": "assistant", "content": run_rec.result or "[Tool Action Executed]"})
+        finally:
+            db.close()
+    except Exception as e:
+        logger.error(f"Error in dispatch_discord_agent: {e}", exc_info=True)
+
+
+async def dispatch_discord_direct_llm(channel_id: str, sender_name: str, body: str, cfg: Dict[str, Any]):
+    """Fallback Discord handler using direct LLM when no agent is available."""
+    history = DISCORD_SESSIONS.setdefault(channel_id, [])
+    history.append({"role": "user", "content": body.strip()})
+    if len(history) > 10:
+        history = history[-10:]
+        DISCORD_SESSIONS[channel_id] = history
+
+    models = await llm.models()
+    model_id = models[0]["id"] if models else settings.model or "hermes-3-llama-3.1-8b"
+    system_prompt = (
+        "You are Hermes, an intelligent and friendly personal AI assistant chatting on Discord. "
+        "Keep your responses concise, helpful, and natural for Discord chat."
+    )
+    messages = [{"role": "system", "content": system_prompt}] + history
+    try:
+        reply_text = await llm.one_shot(model_id, messages, temperature=0.5, max_tokens=1000)
+        clean_text = clean_llm_reply(reply_text)
+        if clean_text:
+            history.append({"role": "assistant", "content": clean_text})
+            await discord_send(cfg, target=channel_id, text=clean_text)
+            logger.info(f"Direct LLM response delivered to Discord channel {channel_id}!")
+    except Exception as e:
+        logger.error(f"Direct LLM Discord reply error: {e}")
+
 @router.post("/integrations/telegram/incoming", tags=["Integrations"])
 async def telegram_incoming_webhook(payload: Dict[str, Any], db: Session = Depends(get_db)):
     """Webhook endpoint for Telegram Bot API updates (used if webhook is configured)."""
@@ -1552,6 +1651,129 @@ async def telegram_polling_worker():
             await asyncio.sleep(5)
 
 
+
+async def discord_gateway_worker():
+    """
+    Continuous background Discord Gateway WebSocket connection (wss://gateway.discord.gg).
+    Maintains heartbeat to keep the bot ONLINE in Discord, listens for MESSAGE_CREATE events,
+    and dispatches them to active agents.
+    """
+    logger.info("Hermes Discord Gateway background listener starting...")
+    import websockets
+
+    while True:
+        try:
+            db = SessionLocal()
+            try:
+                row = db.get(Integration, "discord")
+                cfg = json.loads(secrets.safe_decrypt(row.config)) if row and row.config else {}
+            finally:
+                db.close()
+
+            bot_token = cfg.get("bot_token")
+            if not bot_token:
+                await asyncio.sleep(10)
+                continue
+
+            gateway_url = "wss://gateway.discord.gg/?v=10&encoding=json"
+            async with websockets.connect(gateway_url, max_size=10_000_000) as ws:
+                hello_raw = await ws.recv()
+                hello = json.loads(hello_raw)
+                heartbeat_interval = hello["d"]["heartbeat_interval"] / 1000.0
+                seq_num = None
+
+                async def _heartbeat_loop():
+                    while True:
+                        await asyncio.sleep(heartbeat_interval)
+                        try:
+                            await ws.send(json.dumps({"op": 1, "d": seq_num}))
+                        except Exception:
+                            break
+
+                hb_task = asyncio.create_task(_heartbeat_loop())
+
+                identify_payload = {
+                    "op": 2,
+                    "d": {
+                        "token": bot_token,
+                        "intents": 37377,
+                        "properties": {
+                            "os": "windows",
+                            "browser": "HermesAgentStudio",
+                            "device": "HermesAgentStudio"
+                        }
+                    }
+                }
+                await ws.send(json.dumps(identify_payload))
+                bot_id = None
+
+                try:
+                    while True:
+                        msg_raw = await ws.recv()
+                        packet = json.loads(msg_raw)
+                        op = packet.get("op")
+                        t = packet.get("t")
+                        seq_num = packet.get("s") or seq_num
+
+                        if op == 1:
+                            await ws.send(json.dumps({"op": 1, "d": seq_num}))
+
+                        elif t == "READY":
+                            bot_user = packet.get("d", {}).get("user", {})
+                            bot_id = str(bot_user.get("id"))
+                            username = bot_user.get("username")
+                            logger.info(f"Hermes Discord Bot is now ONLINE as '{username}' (ID: {bot_id})!")
+
+                        elif t == "MESSAGE_CREATE":
+                            d = packet.get("d", {})
+                            author = d.get("author", {})
+                            author_id = str(author.get("id", ""))
+                            is_bot = author.get("bot", False)
+                            content = (d.get("content") or "").strip()
+                            channel_id = str(d.get("channel_id", ""))
+                            sender_name = author.get("username") or "Friend"
+
+                            if is_bot or author_id == bot_id or not content or not channel_id:
+                                continue
+
+                            logger.info(f"Incoming Discord message from '{sender_name}' in channel '{channel_id}': '{content}'")
+
+                            # Send typing indicator
+                            try:
+                                async with httpx.AsyncClient(timeout=5) as c:
+                                    await c.post(
+                                        f"https://discord.com/api/v10/channels/{channel_id}/typing",
+                                        headers={"Authorization": f"Bot {bot_token}"}
+                                    )
+                            except Exception:
+                                pass
+
+                            db = SessionLocal()
+                            target_agent_id = None
+                            try:
+                                agents = db.scalars(select(Agent).where(Agent.enabled == True)).all()
+                                for a in agents:
+                                    tools = json.loads(a.tools_json or "[]")
+                                    if "discord.send" in tools:
+                                        target_agent_id = a.id
+                                        break
+                                if not target_agent_id and agents:
+                                    target_agent_id = agents[0].id
+                            finally:
+                                db.close()
+
+                            if target_agent_id:
+                                asyncio.create_task(dispatch_discord_agent(target_agent_id, channel_id, sender_name, content, cfg))
+                            else:
+                                asyncio.create_task(dispatch_discord_direct_llm(channel_id, sender_name, content, cfg))
+
+                finally:
+                    hb_task.cancel()
+
+        except Exception as e:
+            logger.warning(f"Discord gateway connection error: {e}. Reconnecting in 5s...")
+            await asyncio.sleep(5)
+
 async def email_watcher_worker():
     """
     Continuous background loop that monitors connected IMAP inbox for new unread messages,
@@ -2031,6 +2253,7 @@ async def on_startup():
     asyncio.create_task(scheduler_worker())
     asyncio.create_task(telegram_polling_worker())
     asyncio.create_task(email_watcher_worker())
+    asyncio.create_task(discord_gateway_worker())
     logger.info("Hermes Agent Studio master server initialized with background scheduler, telegram poller, and email watcher.")
 
 # ==============================================================================

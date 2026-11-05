@@ -3,8 +3,8 @@
  * Provides strictly-typed REST fetch wrappers and Server-Sent Event (SSE) streaming utilities.
  */
 
-export const API_BASE = (typeof window !== 'undefined' && window.location.port === '5173')
-  ? 'http://127.0.0.1:8790/api'
+export const API_BASE = (typeof window !== 'undefined' && (window.location.port === '5173' || window.location.port === '3000'))
+  ? `http://${window.location.hostname || '127.0.0.1'}:8790/api`
   : '/api';
 
 export function getAuthToken(): string | null {
