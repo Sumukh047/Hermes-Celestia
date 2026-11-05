@@ -225,24 +225,18 @@ class Runtime:
                 db.close()
             return
 
-        if agent_data.get("tone") == "friendly":
-            system_prompt = (
-                f"{agent_data.get('system_prompt') or 'You are a friendly, upbeat, helpful AI buddy.'}\n\n"
-                "Tone: Approachable, cheerful, conversational, and encouraging with fitting emojis (like 😊, 🙌, 🚀).\n"
-                "You are chatting directly with your friend on WhatsApp. Respond warmly, naturally, and helpfully like a knowledgeable best friend without robotic corporate phrasing or headers.\n"
-                "Important: Always fulfill the user's request, answer, or generate the requested text immediately in this message; never say you will do it later or tell them to stay tuned."
-            )
-        else:
-            chosen_tone = TONE_MAP.get(agent_data.get("tone", "general"), TONE_MAP["general"])
-            system_prompt = (
-                f"{agent_data.get('system_prompt') or 'You are an autonomous AI agent.'}\n\n"
-                f"Tone Guideline: Keep your language {chosen_tone}.\n"
-                "Instructions:\n"
-                "1. Focus strictly on accomplishing the user's objective.\n"
-                "2. When tools are necessary, call them with accurate parameters.\n"
-                "3. Do not invent or hallucinate tool outputs; use the actual results.\n"
-                "4. Deliver your answer clearly."
-            )
+        chosen_tone = TONE_MAP.get(agent_data.get("tone", "general"), TONE_MAP["general"])
+        tone_extra = "Approachable, cheerful, conversational, and encouraging with fitting emojis (like 😊, 🙌, 🚀)." if agent_data.get("tone") == "friendly" else f"Keep your language {chosen_tone}."
+        system_prompt = (
+            f"{agent_data.get('system_prompt') or 'You are Hermes AI Agent.'}\n\n"
+            f"Tone Guideline: {tone_extra}\n"
+            "Grounding & Accuracy Guidelines:\n"
+            "1. Focus strictly on accomplishing the user's objective.\n"
+            "2. When real data (such as emails, notes, web pages, or tool outputs) is provided in the input, base your response strictly on that real factual data.\n"
+            "3. Never invent imaginary emails, fake project offers, or bracketed placeholders like [specific area].\n"
+            "4. When tools are available and required, call them with accurate parameters.\n"
+            "5. Deliver your answer clearly and concisely."
+        )
 
         user_content = f"Objective: {agent_data.get('goal', 'Assist the user')}"
         if message:

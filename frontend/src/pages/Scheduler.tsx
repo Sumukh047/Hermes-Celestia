@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api, scheduleApi, ScheduleItem } from '../api';
 import { 
-  Clock, Plus, Play, Trash2, Power, CheckCircle2, 
+  Clock, Plus, Play, Trash2, Power, Edit2, CheckCircle2, 
   AlertCircle, RefreshCw, Calendar, Sparkles, X, ChevronRight, Zap,
   FileText, Copy, Check, Eye, AlertTriangle, ArrowRight, Bot
 } from 'lucide-react';
@@ -11,6 +11,7 @@ interface AgentBasic {
   name: string;
   model: string;
   tone: string;
+  tools?: string[];
 }
 
 const AUTOMATION_TEMPLATES = [
@@ -49,6 +50,14 @@ export const Scheduler: React.FC = () => {
   const [toast, setToast] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [selectedResult, setSelectedResult] = useState<{ title: string; result: string; runId?: string } | null>(null);
+
+  // Edit Modal State
+  const [editingSchedule, setEditingSchedule] = useState<ScheduleItem | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editAgentId, setEditAgentId] = useState('');
+  const [editIntervalType, setEditIntervalType] = useState('every 1 hour');
+  const [editCronExpr, setEditCronExpr] = useState('every 1 hour');
+  const [editTaskPrompt, setEditTaskPrompt] = useState('');
 
   // Form State
   const [name, setName] = useState('');
@@ -125,6 +134,33 @@ export const Scheduler: React.FC = () => {
     }
   };
 
+  const handleOpenEdit = (s: ScheduleItem) => {
+    setEditingSchedule(s);
+    setEditName(s.name);
+    setEditAgentId(s.agent_id);
+    setEditIntervalType(s.cron_expression);
+    setEditCronExpr(s.cron_expression);
+    setEditTaskPrompt(s.task_prompt);
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingSchedule) return;
+    try {
+      await scheduleApi.update(editingSchedule.id, {
+        name: editName,
+        agent_id: editAgentId,
+        cron_expression: editCronExpr,
+        task_prompt: editTaskPrompt
+      });
+      setEditingSchedule(null);
+      showToast('Automation updated successfully!');
+      loadData();
+    } catch (err: any) {
+      showToast(`Failed to update: ${err.message}`);
+    }
+  };
+
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this scheduled automation?')) return;
     try {
@@ -165,10 +201,14 @@ export const Scheduler: React.FC = () => {
     setIntervalType(tpl.cron);
     setTaskPrompt(tpl.prompt);
     // Auto-select best matching agent if possible
-    const match = agents.find(a => 
-      a.name.toLowerCase().includes(tpl.agentNameMatch) || 
-      a.tone.toLowerCase().includes(tpl.agentNameMatch)
-    );
+    const match = agents.find(a => {
+      const toolStr = (a.tools || []).join(' ').toLowerCase();
+      const nameStr = a.name.toLowerCase();
+      if (tpl.agentNameMatch === 'mail' || tpl.agentNameMatch === 'gmail') {
+        return toolStr.includes('email') || toolStr.includes('gmail') || nameStr.includes('gmail') || nameStr.includes('email');
+      }
+      return nameStr.includes(tpl.agentNameMatch) || toolStr.includes(tpl.agentNameMatch);
+    });
     if (match) setAgentId(match.id);
   };
 
@@ -537,6 +577,25 @@ export const Scheduler: React.FC = () => {
                       </button>
 
                       <button
+                        onClick={() => handleOpenEdit(s)}
+                        title="Edit automation configuration"
+                        style={{
+                          background: '#2B2D31',
+                          border: '1px solid #383A40',
+                          color: '#B5BAC1',
+                          padding: '8px 12px',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          fontSize: '13px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '5px'
+                        }}
+                      >
+                        <Edit2 size={13} /> Edit
+                      </button>
+
+                      <button
                         onClick={() => handleDelete(s.id)}
                         title="Delete automation"
                         style={{
@@ -838,11 +897,14 @@ export const Scheduler: React.FC = () => {
                     boxSizing: 'border-box'
                   }}
                 >
-                  {agents.map(a => (
-                    <option key={a.id} value={a.id}>
-                      {a.name} ({a.tone} | {a.model || 'Default Model'})
-                    </option>
-                  ))}
+                  {agents.map(a => {
+                    const toolPreview = a.tools && a.tools.length > 0 ? a.tools.slice(0, 2).join(', ') : 'no tools';
+                    return (
+                      <option key={a.id} value={a.id}>
+                        {a.name} — Tools: [{toolPreview}] ({a.tone})
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
 
@@ -963,6 +1025,216 @@ export const Scheduler: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+    
+      {/* Edit Automation Modal */}
+      {editingSchedule && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.75)',
+          backdropFilter: 'blur(6px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '16px'
+        }}>
+          <div style={{
+            background: '#1E1F22',
+            border: '1px solid #35373C',
+            borderRadius: '16px',
+            width: '100%',
+            maxWidth: '560px',
+            boxShadow: '0 16px 40px rgba(0,0,0,0.8)',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              padding: '18px 24px',
+              borderBottom: '1px solid #2B2D31',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Edit2 size={18} color="#5865F2" />
+                <b style={{ color: '#fff', fontSize: '16px' }}>Edit Automation Configuration</b>
+              </div>
+              <button
+                onClick={() => setEditingSchedule(null)}
+                style={{ background: 'transparent', border: 'none', color: '#949BA4', cursor: 'pointer' }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEdit} style={{ padding: '24px' }}>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontSize: '12px', color: '#B5BAC1', marginBottom: '6px', textTransform: 'uppercase', fontWeight: 700 }}>
+                  Automation Title
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editName}
+                  onChange={e => setEditName(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    background: '#111214',
+                    border: '1px solid #383A40',
+                    borderRadius: '8px',
+                    color: '#fff',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontSize: '12px', color: '#B5BAC1', marginBottom: '6px', textTransform: 'uppercase', fontWeight: 700 }}>
+                  Assigned AI Agent
+                </label>
+                <select
+                  value={editAgentId}
+                  onChange={e => setEditAgentId(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    background: '#111214',
+                    border: '1px solid #383A40',
+                    borderRadius: '8px',
+                    color: '#fff',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
+                  }}
+                >
+                  {agents.map(a => {
+                    const toolPreview = a.tools && a.tools.length > 0 ? a.tools.slice(0, 2).join(', ') : 'no tools';
+                    return (
+                      <option key={a.id} value={a.id}>
+                        {a.name} — Tools: [{toolPreview}] ({a.tone})
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontSize: '12px', color: '#B5BAC1', marginBottom: '6px', textTransform: 'uppercase', fontWeight: 700 }}>
+                  Schedule Interval
+                </label>
+                <select
+                  value={editIntervalType}
+                  onChange={e => {
+                    const val = e.target.value;
+                    setEditIntervalType(val);
+                    if (val !== 'custom') setEditCronExpr(val);
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    background: '#111214',
+                    border: '1px solid #383A40',
+                    borderRadius: '8px',
+                    color: '#fff',
+                    fontSize: '14px',
+                    boxSizing: 'border-box',
+                    marginBottom: '8px'
+                  }}
+                >
+                  <option value="every 1 minute">Every 1 Minute (High Frequency)</option>
+                  <option value="every 5 minutes">Every 5 Minutes</option>
+                  <option value="every 15 minutes">Every 15 Minutes</option>
+                  <option value="every 1 hour">Every 1 Hour (Standard)</option>
+                  <option value="every 4 hours">Every 4 Hours</option>
+                  <option value="@daily">Daily (24 Hours)</option>
+                  <option value="custom">Custom Interval / Cron</option>
+                </select>
+
+                {editIntervalType === 'custom' && (
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. every 30 minutes or 0 */2 * * *"
+                    value={editCronExpr}
+                    onChange={e => setEditCronExpr(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      background: '#111214',
+                      border: '1px solid #383A40',
+                      borderRadius: '8px',
+                      color: '#5865F2',
+                      fontSize: '13px',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                )}
+              </div>
+
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', fontSize: '12px', color: '#B5BAC1', marginBottom: '6px', textTransform: 'uppercase', fontWeight: 700 }}>
+                  Autonomous Instruction / Task
+                </label>
+                <textarea
+                  required
+                  rows={4}
+                  value={editTaskPrompt}
+                  onChange={e => setEditTaskPrompt(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    background: '#111214',
+                    border: '1px solid #383A40',
+                    borderRadius: '8px',
+                    color: '#fff',
+                    fontSize: '14px',
+                    boxSizing: 'border-box',
+                    resize: 'vertical'
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  onClick={() => setEditingSchedule(null)}
+                  style={{
+                    padding: '10px 16px',
+                    background: '#2B2D31',
+                    border: '1px solid #383A40',
+                    color: '#949BA4',
+                    borderRadius: '8px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  style={{
+                    padding: '10px 20px',
+                    background: 'linear-gradient(135deg, #5865F2, #4752C4)',
+                    border: 'none',
+                    color: '#fff',
+                    borderRadius: '8px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  <Sparkles size={14} /> Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+</div>
   );
 };

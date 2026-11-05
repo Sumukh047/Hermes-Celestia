@@ -48,6 +48,40 @@ def decode_mime_words(raw_header: Optional[str]) -> str:
     return "".join(decoded_fragments)
 
 
+
+def extract_email_body_clean(msg: email.message.Message) -> str:
+    """Extract clean plain-text or HTML-stripped body from an email Message object."""
+    body = ""
+    if msg.is_multipart():
+        for part in msg.walk():
+            ctype = part.get_content_type()
+            cdispo = str(part.get('Content-Disposition'))
+            if ctype == 'text/plain' and 'attachment' not in cdispo:
+                payload = part.get_payload(decode=True)
+                if payload:
+                    charset = part.get_content_charset() or 'utf-8'
+                    body += payload.decode(charset, errors='replace')
+        if not body:
+            for part in msg.walk():
+                if part.get_content_type() == 'text/html':
+                    payload = part.get_payload(decode=True)
+                    if payload:
+                        charset = part.get_content_charset() or 'utf-8'
+                        html_text = payload.decode(charset, errors='replace')
+                        body += re.sub(r'<[^>]+>', ' ', html_text)
+    else:
+        payload = msg.get_payload(decode=True)
+        if payload:
+            charset = msg.get_content_charset() or 'utf-8'
+            body = payload.decode(charset, errors='replace')
+        else:
+            body = str(msg.get_payload() or "")
+
+    clean = ' '.join(body.split())
+    return clean
+
+    return clean
+
 # ==============================================================================
 # Email / Gmail Implementation (IMAP + SMTP + OAuth2)
 # ==============================================================================
@@ -161,33 +195,28 @@ async def email_search(config: Dict[str, Any], query: str = "", max_results: int
                 latest_ids.reverse()
 
                 for msg_id in latest_ids:
-                    res, data = mail.fetch(msg_id, "(RFC822.HEADER BODY.PEEK[TEXT])")
-                    if res != "OK":
-                        continue
+                    try:
+                        res, data = mail.fetch(msg_id, "(RFC822)")
+                        if res != "OK" or not data or not data[0] or not isinstance(data[0], tuple):
+                            continue
+                        raw_email = data[0][1]
+                        msg = email.message_from_bytes(raw_email)
+                        subject = decode_mime_words(msg.get("Subject", "(No Subject)"))
+                        from_addr = decode_mime_words(msg.get("From", ""))
+                        date_str = msg.get("Date", "")
+                        clean_body = extract_email_body_clean(msg)
+                        snippet = clean_body[:300].strip()
 
-                    raw_header = b""
-                    raw_body = b""
-                    for part in data:
-                        if isinstance(part, tuple):
-                            if b"HEADER" in part[0]:
-                                raw_header = part[1]
-                            elif b"TEXT" in part[0]:
-                                raw_body = part[1]
-
-                    msg = email.message_from_bytes(raw_header)
-                    subject = decode_mime_words(msg.get("Subject", "(No Subject)"))
-                    from_addr = decode_mime_words(msg.get("From", ""))
-                    date_str = msg.get("Date", "")
-
-                    snippet = raw_body[:300].decode("utf-8", errors="replace").strip()
-
-                    results.append({
-                        "id": msg_id.decode("ascii", errors="ignore"),
-                        "from": from_addr,
-                        "subject": subject,
-                        "date": date_str,
-                        "snippet": snippet
-                    })
+                        results.append({
+                            "id": msg_id.decode("ascii", errors="ignore"),
+                            "from": from_addr,
+                            "subject": subject,
+                            "date": date_str,
+                            "snippet": snippet,
+                            "body": clean_body
+                        })
+                    except Exception as fe:
+                        logger.warning(f"Error fetching email message {msg_id}: {fe}")
 
             mail.logout()
             return results

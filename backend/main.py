@@ -1671,8 +1671,47 @@ async def email_watcher_worker():
 async def execute_schedule_task(schedule_id: str, agent_id: str, run_id: str, prompt: str):
     """Executes a schedule task, awaits completion, and updates the schedule status and outcome."""
     logger.info(f"[SCHEDULER] Starting background task for schedule '{schedule_id}' (run: {run_id})")
+    exec_prompt = prompt
     try:
-        await runtime.execute(agent_id, run_id, prompt, simulation=False)
+        # Check if the prompt asks for email/inbox content
+        email_keywords = ["email", "emails", "inbox", "mail", "gmail", "digest"]
+        if any(k in prompt.lower() for k in email_keywords):
+            db_cfg = SessionLocal()
+            try:
+                row = db_cfg.get(Integration, "email")
+                cfg = json.loads(secrets.safe_decrypt(row.config)) if row and row.config else {}
+            finally:
+                db_cfg.close()
+
+            if cfg.get("email") and cfg.get("app_password"):
+                try:
+                    latest_emails = await email_search(cfg, max_results=6)
+                    if latest_emails:
+                        formatted_emails = []
+                        for idx, em in enumerate(latest_emails, 1):
+                            subj = em.get("subject", "(No Subject)")
+                            sender = em.get("from", "Unknown Sender")
+                            date = em.get("date", "")
+                            body_txt = (em.get("body") or em.get("snippet") or "").strip()[:500]
+                            formatted_emails.append(
+                                f"{idx}. From: {sender}\n"
+                                f"   Date: {date}\n"
+                                f"   Subject: {subj}\n"
+                                f"   Content: {body_txt}"
+                            )
+                        inbox_context = "\n\n".join(formatted_emails)
+                        exec_prompt = (
+                            f"{prompt}\n\n"
+                            f"[Connected Inbox - Live Emails from {cfg.get('email')}]:\n"
+                            f"{inbox_context}\n\n"
+                            "Instructions: Base your response or summary strictly on the real emails listed above. "
+                            "Accurately reflect the actual subjects, senders, and content. Do not fabricate imaginary emails or placeholder brackets."
+                        )
+                        logger.info(f"[SCHEDULER] Enriched schedule '{schedule_id}' with {len(latest_emails)} live emails from inbox.")
+                except Exception as ex:
+                    logger.warning(f"[SCHEDULER] Could not fetch live emails for schedule context: {ex}")
+
+        await runtime.execute(agent_id, run_id, exec_prompt, simulation=False)
         db = SessionLocal()
         try:
             sched = db.get(Schedule, schedule_id)
