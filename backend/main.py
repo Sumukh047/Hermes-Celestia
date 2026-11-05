@@ -5,7 +5,7 @@ asynchronous tool dispatching, token-to-token streaming, and bidirectional WebSo
 """
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import json
 import logging
 import os
@@ -113,6 +113,8 @@ def serialize_schedule(s: Schedule) -> Dict[str, Any]:
         "last_run": s.last_run.isoformat() if s.last_run else None,
         "next_run": s.next_run.isoformat() if s.next_run else None,
         "last_status": s.last_status,
+        "last_run_id": getattr(s, "last_run_id", None),
+        "last_result": getattr(s, "last_result", None),
         "created_at": s.created_at.isoformat() if s.created_at else None
     }
 
@@ -1432,15 +1434,37 @@ def parse_schedule_interval_seconds(expr: str) -> int:
         return 86400
     if "@weekly" in e:
         return 604800
-    m_min = re.search(r'every\s+(\d+)\s*(?:minutes?|mins?|m)', e)
+    if "every minute" in e or "every 1 min" in e:
+        return 60
+    if "every hour" in e or "every 1 hour" in e or "every 1 hr" in e:
+        return 3600
+    if "every day" in e or "every 1 day" in e:
+        return 86400
+    m_min = re.search(r'every\s+(\d+)\s*(?:minutes?|mins?|m\b)', e)
     if m_min:
         return max(15, int(m_min.group(1)) * 60)
-    m_hr = re.search(r'every\s+(\d+)\s*(?:hours?|hrs?|h)', e)
+    m_hr = re.search(r'every\s+(\d+)\s*(?:hours?|hrs?|h\b)', e)
     if m_hr:
         return max(60, int(m_hr.group(1)) * 3600)
-    m_sec = re.search(r'every\s+(\d+)\s*(?:seconds?|secs?|s)', e)
+    m_sec = re.search(r'every\s+(\d+)\s*(?:seconds?|secs?|s\b)', e)
     if m_sec:
         return max(15, int(m_sec.group(1)))
+    # Cron standard notation: */5 * * * * or * * * * *
+    parts = e.split()
+    if len(parts) == 5:
+        minute_part = parts[0]
+        if minute_part.startswith("*/"):
+            try:
+                mins = int(minute_part.replace("*/", ""))
+                return max(15, mins * 60)
+            except ValueError:
+                pass
+        elif minute_part == "*":
+            return 60
+        elif parts[1] == "*" and minute_part == "0":
+            return 3600
+        elif minute_part == "0" and parts[1] == "0":
+            return 86400
     return 3600
 
 
@@ -1644,6 +1668,41 @@ async def email_watcher_worker():
             await asyncio.sleep(10)
 
 
+async def execute_schedule_task(schedule_id: str, agent_id: str, run_id: str, prompt: str):
+    """Executes a schedule task, awaits completion, and updates the schedule status and outcome."""
+    logger.info(f"[SCHEDULER] Starting background task for schedule '{schedule_id}' (run: {run_id})")
+    try:
+        await runtime.execute(agent_id, run_id, prompt, simulation=False)
+        db = SessionLocal()
+        try:
+            sched = db.get(Schedule, schedule_id)
+            run_rec = db.get(Run, run_id)
+            if sched:
+                status = run_rec.status if run_rec else "completed"
+                sched.last_status = status
+                if run_rec and run_rec.result:
+                    sched.last_result = run_rec.result
+                sched.last_run_id = run_id
+                interval = parse_schedule_interval_seconds(sched.cron_expression)
+                sched.next_run = (sched.last_run or utc_now()) + timedelta(seconds=interval)
+                db.commit()
+                logger.info(f"[SCHEDULER] Schedule '{schedule_id}' finished successfully with status '{status}'")
+        finally:
+            db.close()
+    except Exception as e:
+        logger.error(f"[SCHEDULER] Execution failed for schedule '{schedule_id}': {e}", exc_info=True)
+        db = SessionLocal()
+        try:
+            sched = db.get(Schedule, schedule_id)
+            if sched:
+                sched.last_status = "failed"
+                sched.last_result = f"Error: {str(e)}"
+                sched.last_run_id = run_id
+                db.commit()
+        finally:
+            db.close()
+
+
 async def scheduler_worker():
     """Background worker continuously checking scheduled cron jobs and executing due tasks."""
     logger.info("Hermes Autonomous Background Scheduler loop running.")
@@ -1669,8 +1728,10 @@ async def scheduler_worker():
                         run_id = uuid.uuid4().hex[:12]
                         s.last_run = now
                         s.last_status = "running"
+                        s.last_run_id = run_id
+                        s.next_run = now + timedelta(seconds=interval_sec)
                         db.commit()
-                        asyncio.create_task(runtime.execute(s.agent_id, run_id, s.task_prompt, simulation=False))
+                        asyncio.create_task(execute_schedule_task(s.id, s.agent_id, run_id, s.task_prompt))
             finally:
                 db.close()
         except asyncio.CancelledError:
@@ -1747,10 +1808,13 @@ async def run_schedule_now(schedule_id: str, db: Session = Depends(get_db)):
     now = utc_now()
     sched.last_run = now
     sched.last_status = "running"
+    run_id = uuid.uuid4().hex[:12]
+    sched.last_run_id = run_id
+    interval = parse_schedule_interval_seconds(sched.cron_expression)
+    sched.next_run = now + timedelta(seconds=interval)
     db.commit()
 
-    run_id = uuid.uuid4().hex[:12]
-    asyncio.create_task(runtime.execute(sched.agent_id, run_id, sched.task_prompt, simulation=False))
+    asyncio.create_task(execute_schedule_task(sched.id, sched.agent_id, run_id, sched.task_prompt))
     return {"status": "triggered", "run_id": run_id, "schedule_id": sched.id}
 
 

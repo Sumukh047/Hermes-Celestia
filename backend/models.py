@@ -133,4 +133,6 @@ class Schedule(Base):
     last_run: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     next_run: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     last_status: Mapped[str] = mapped_column(String(30), default="pending")
+    last_run_id: Mapped[Optional[str]] = mapped_column(String(32), nullable=True)
+    last_result: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now)

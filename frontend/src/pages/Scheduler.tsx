@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { api, scheduleApi, ScheduleItem } from '../api';
 import { 
   Clock, Plus, Play, Trash2, Power, CheckCircle2, 
-  AlertCircle, RefreshCw, Calendar, Sparkles, X, ChevronRight, Zap
+  AlertCircle, RefreshCw, Calendar, Sparkles, X, ChevronRight, Zap,
+  FileText, Copy, Check, Eye, AlertTriangle, ArrowRight, Bot
 } from 'lucide-react';
 
 interface AgentBasic {
@@ -12,6 +13,33 @@ interface AgentBasic {
   tone: string;
 }
 
+const AUTOMATION_TEMPLATES = [
+  {
+    title: 'Daily Email Digest',
+    agentNameMatch: 'mail',
+    cron: 'every 1 hour',
+    prompt: 'Search recent unread emails in my inbox, summarize the top 3 priority threads with key action items, and provide a clean briefing.'
+  },
+  {
+    title: 'Market & Price Pulse',
+    agentNameMatch: 'market',
+    cron: 'every 4 hours',
+    prompt: 'Perform web search on latest market and tech news in AI agents, summarize the top 3 headlines, and extract actionable takeaways.'
+  },
+  {
+    title: 'Obsidian Second Brain Sync',
+    agentNameMatch: 'obsidian',
+    cron: 'every 2 hours',
+    prompt: 'Review active notes and tasks in my Obsidian second brain vault, check for uncompleted action items, and write a summary update.'
+  },
+  {
+    title: 'Fast Check & WhatsApp Alert',
+    agentNameMatch: 'whatsapp',
+    cron: 'every minute',
+    prompt: 'Check for high-priority updates or notifications and send a short status alert to my personal WhatsApp notes chat.'
+  }
+];
+
 export const Scheduler: React.FC = () => {
   const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
   const [agents, setAgents] = useState<AgentBasic[]>([]);
@@ -19,10 +47,13 @@ export const Scheduler: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [runningId, setRunningId] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [selectedResult, setSelectedResult] = useState<{ title: string; result: string; runId?: string } | null>(null);
 
   // Form State
   const [name, setName] = useState('');
   const [agentId, setAgentId] = useState('');
+  const [intervalType, setIntervalType] = useState('every 1 hour');
   const [cronExpr, setCronExpr] = useState('every 1 hour');
   const [taskPrompt, setTaskPrompt] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
@@ -47,9 +78,11 @@ export const Scheduler: React.FC = () => {
 
   useEffect(() => {
     loadData();
-    const interval = setInterval(loadData, 10000);
+    // Fast polling if any schedule is currently running
+    const hasRunning = schedules.some(s => s.last_status === 'running' || s.id === runningId);
+    const interval = setInterval(loadData, hasRunning ? 3000 : 10000);
     return () => clearInterval(interval);
-  }, []);
+  }, [schedules, runningId]);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -107,13 +140,54 @@ export const Scheduler: React.FC = () => {
     setRunningId(id);
     try {
       const res = await scheduleApi.runNow(id);
-      showToast(`Dispatched automation execution! Run ID: ${res.run_id}`);
+      showToast(`Execution triggered! Run ID: ${res.run_id}`);
       loadData();
+
+      // Poll faster to capture the completion
+      let attempts = 0;
+      const pollInterval = setInterval(async () => {
+        attempts++;
+        await loadData();
+        if (attempts >= 10) {
+          clearInterval(pollInterval);
+          setRunningId(null);
+        }
+      }, 2500);
     } catch (err: any) {
       showToast(`Trigger failed: ${err.message}`);
-    } finally {
-      setTimeout(() => setRunningId(null), 1500);
+      setRunningId(null);
     }
+  };
+
+  const handleApplyTemplate = (tpl: typeof AUTOMATION_TEMPLATES[0]) => {
+    setName(tpl.title);
+    setCronExpr(tpl.cron);
+    setIntervalType(tpl.cron);
+    setTaskPrompt(tpl.prompt);
+    // Auto-select best matching agent if possible
+    const match = agents.find(a => 
+      a.name.toLowerCase().includes(tpl.agentNameMatch) || 
+      a.tone.toLowerCase().includes(tpl.agentNameMatch)
+    );
+    if (match) setAgentId(match.id);
+  };
+
+  const handleCopyResult = (id: string, text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2500);
+  };
+
+  const formatRelativeNextRun = (nextRunStr?: string) => {
+    if (!nextRunStr) return null;
+    const diffMs = new Date(nextRunStr).getTime() - Date.now();
+    if (diffMs <= 0) return 'due shortly';
+    const mins = Math.round(diffMs / 60000);
+    if (mins < 1) return 'in less than a min';
+    if (mins === 1) return 'in 1 min';
+    if (mins < 60) return `in ${mins} mins`;
+    const hrs = Math.round(mins / 60);
+    return `in ~${hrs} hr${hrs > 1 ? 's' : ''}`;
   };
 
   return (
@@ -175,8 +249,7 @@ export const Scheduler: React.FC = () => {
             Scheduled Cron Jobs & Background Tasks
           </h2>
           <p style={{ color: '#949BA4', fontSize: '14px', margin: 0, maxWidth: '650px', lineHeight: 1.5 }}>
-            Automate daily email briefings, hourly web price scrapers, market research pulses,
-            and Obsidian vault memory syncs with zero human intervention.
+            Automate daily email briefings, periodic web market scrapers, and Obsidian second brain syncs with zero human intervention.
           </p>
         </div>
 
@@ -278,128 +351,356 @@ export const Scheduler: React.FC = () => {
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {schedules.map(s => {
               const assignedAgent = agents.find(a => a.id === s.agent_id);
+              const isExecuting = s.last_status === 'running' || runningId === s.id;
+              const nextRunRelative = formatRelativeNextRun(s.next_run);
+
               return (
                 <div
                   key={s.id}
                   style={{
-                    padding: '20px 24px',
+                    padding: '22px 24px',
                     borderBottom: '1px solid #2B2D31',
                     display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    flexWrap: 'wrap',
-                    gap: '16px',
+                    flexDirection: 'column',
+                    gap: '12px',
                     opacity: s.enabled ? 1 : 0.65,
-                    transition: 'opacity 0.2s'
+                    background: isExecuting ? 'rgba(88, 101, 242, 0.05)' : 'transparent',
+                    transition: 'all 0.2s'
                   }}
                 >
-                  <div style={{ flex: 1, minWidth: '280px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-                      <b style={{ color: '#fff', fontSize: '16px' }}>{s.name}</b>
-                      <span style={{
-                        background: '#2B2D31',
-                        border: '1px solid #383A40',
-                        color: '#B5BAC1',
-                        padding: '2px 8px',
-                        borderRadius: '12px',
-                        fontSize: '11px',
-                        fontWeight: 600
-                      }}>
-                        {s.cron_expression}
-                      </span>
-                      <span style={{
-                        background: s.enabled ? 'rgba(87, 242, 135, 0.15)' : 'rgba(148, 155, 164, 0.15)',
-                        color: s.enabled ? '#57F287' : '#949BA4',
-                        padding: '2px 8px',
-                        borderRadius: '12px',
-                        fontSize: '11px',
-                        fontWeight: 700
-                      }}>
-                        {s.enabled ? 'ACTIVE' : 'PAUSED'}
-                      </span>
-                    </div>
-
-                    <div style={{ fontSize: '13px', color: '#949BA4', marginBottom: '8px', lineHeight: 1.4 }}>
-                      <b style={{ color: '#B5BAC1' }}>Prompt: </b>{s.task_prompt}
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', fontSize: '12px', color: '#949BA4' }}>
-                      <span>
-                        Agent: <b style={{ color: '#5865F2' }}>{assignedAgent ? assignedAgent.name : s.agent_id}</b>
-                      </span>
-                      <span>
-                        Last run: {s.last_run ? new Date(s.last_run).toLocaleString() : 'Never'}
-                      </span>
-                      {s.last_status && (
-                        <span>
-                          Status: <b style={{ color: '#B5BAC1' }}>{s.last_status}</b>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '16px'
+                  }}>
+                    <div style={{ flex: 1, minWidth: '280px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px', flexWrap: 'wrap' }}>
+                        <b style={{ color: '#fff', fontSize: '17px' }}>{s.name}</b>
+                        
+                        {/* Cron Interval Pill */}
+                        <span style={{
+                          background: '#2B2D31',
+                          border: '1px solid #383A40',
+                          color: '#E0E3EA',
+                          padding: '3px 10px',
+                          borderRadius: '12px',
+                          fontSize: '11px',
+                          fontWeight: 700
+                        }}>
+                          {s.cron_expression}
                         </span>
-                      )}
+
+                        {/* Active / Paused Pill */}
+                        <span style={{
+                          background: s.enabled ? 'rgba(87, 242, 135, 0.15)' : 'rgba(148, 155, 164, 0.15)',
+                          color: s.enabled ? '#57F287' : '#949BA4',
+                          border: s.enabled ? '1px solid rgba(87, 242, 135, 0.3)' : '1px solid #383A40',
+                          padding: '3px 10px',
+                          borderRadius: '12px',
+                          fontSize: '11px',
+                          fontWeight: 700
+                        }}>
+                          {s.enabled ? 'ACTIVE' : 'PAUSED'}
+                        </span>
+
+                        {/* Real-time Execution Status Pill */}
+                        {isExecuting ? (
+                          <span style={{
+                            background: 'rgba(88, 101, 242, 0.2)',
+                            color: '#5865F2',
+                            border: '1px solid #5865F2',
+                            padding: '3px 10px',
+                            borderRadius: '12px',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '5px'
+                          }}>
+                            <RefreshCw size={11} className="spin" /> RUNNING NOW
+                          </span>
+                        ) : s.last_status === 'completed' ? (
+                          <span style={{
+                            background: 'rgba(87, 242, 135, 0.12)',
+                            color: '#57F287',
+                            padding: '3px 8px',
+                            borderRadius: '12px',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}>
+                            <CheckCircle2 size={11} /> COMPLETED
+                          </span>
+                        ) : s.last_status === 'failed' ? (
+                          <span style={{
+                            background: 'rgba(237, 66, 69, 0.15)',
+                            color: '#ED4245',
+                            padding: '3px 8px',
+                            borderRadius: '12px',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}>
+                            <AlertTriangle size={11} /> FAILED
+                          </span>
+                        ) : (
+                          <span style={{
+                            background: 'rgba(148, 155, 164, 0.12)',
+                            color: '#949BA4',
+                            padding: '3px 8px',
+                            borderRadius: '12px',
+                            fontSize: '11px',
+                            fontWeight: 600
+                          }}>
+                            READY
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Prompt */}
+                      <div style={{ fontSize: '13px', color: '#B5BAC1', marginBottom: '8px', lineHeight: 1.5 }}>
+                        <b style={{ color: '#fff' }}>Prompt: </b>{s.task_prompt}
+                      </div>
+
+                      {/* Metadata Row */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '12px', color: '#949BA4', flexWrap: 'wrap' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <Bot size={13} color="#5865F2" /> Agent: <b style={{ color: '#5865F2' }}>{assignedAgent ? assignedAgent.name : s.agent_id}</b>
+                        </span>
+                        <span>
+                          Last run: <strong style={{ color: '#E0E3EA' }}>{s.last_run ? new Date(s.last_run).toLocaleString() : 'Never'}</strong>
+                        </span>
+                        {s.enabled && nextRunRelative && (
+                          <span style={{ color: '#57F287', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <Clock size={12} /> Next run: {nextRunRelative}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <button
+                        onClick={() => handleRunNow(s.id)}
+                        disabled={isExecuting}
+                        title="Trigger execution immediately"
+                        style={{
+                          background: isExecuting ? 'rgba(88, 101, 242, 0.2)' : '#2B2D31',
+                          border: '1px solid #5865F2',
+                          color: '#5865F2',
+                          padding: '8px 14px',
+                          borderRadius: '8px',
+                          cursor: isExecuting ? 'not-allowed' : 'pointer',
+                          fontSize: '13px',
+                          fontWeight: 600,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        {isExecuting ? (
+                          <>
+                            <RefreshCw size={14} className="spin" /> Running...
+                          </>
+                        ) : (
+                          <>
+                            <Zap size={14} /> Run Now
+                          </>
+                        )}
+                      </button>
+
+                      <button
+                        onClick={() => handleToggle(s)}
+                        title={s.enabled ? 'Pause automation' : 'Enable automation'}
+                        style={{
+                          background: s.enabled ? '#35373C' : '#2B2D31',
+                          border: '1px solid #383A40',
+                          color: s.enabled ? '#57F287' : '#949BA4',
+                          padding: '8px 14px',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          fontSize: '13px',
+                          fontWeight: 600,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        <Power size={14} /> {s.enabled ? 'Active' : 'Paused'}
+                      </button>
+
+                      <button
+                        onClick={() => handleDelete(s.id)}
+                        title="Delete automation"
+                        style={{
+                          background: 'transparent',
+                          border: '1px solid transparent',
+                          color: '#ED4245',
+                          padding: '8px',
+                          cursor: 'pointer',
+                          borderRadius: '6px'
+                        }}
+                      >
+                        <Trash2 size={16} />
+                      </button>
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <button
-                      onClick={() => handleRunNow(s.id)}
-                      disabled={runningId === s.id}
-                      title="Trigger execution immediately"
-                      style={{
-                        background: '#2B2D31',
-                        border: '1px solid #5865F2',
-                        color: '#5865F2',
-                        padding: '8px 14px',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
+                  {/* Latest Execution Outcome Box */}
+                  {s.last_result && (
+                    <div style={{
+                      marginTop: '6px',
+                      background: '#18191C',
+                      border: '1px solid #2B2D31',
+                      borderRadius: '8px',
+                      padding: '12px 16px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '6px'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span style={{ fontSize: '11px', fontWeight: 700, color: '#5865F2', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                          <CheckCircle2 size={13} color="#57F287" /> Latest Run Output {s.last_run_id ? `(#${s.last_run_id})` : ''}:
+                        </span>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button
+                            onClick={() => handleCopyResult(s.id, s.last_result || '')}
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              color: copiedId === s.id ? '#57F287' : '#949BA4',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              fontSize: '11px'
+                            }}
+                          >
+                            {copiedId === s.id ? <Check size={12} /> : <Copy size={12} />}
+                            {copiedId === s.id ? 'Copied' : 'Copy'}
+                          </button>
+                          <button
+                            onClick={() => setSelectedResult({ title: s.name, result: s.last_result || '', runId: s.last_run_id })}
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              color: '#5865F2',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              fontSize: '11px',
+                              fontWeight: 600
+                            }}
+                          >
+                            <Eye size={12} /> Expand
+                          </button>
+                        </div>
+                      </div>
+                      <div style={{
+                        color: '#E0E3EA',
                         fontSize: '13px',
-                        fontWeight: 600,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px'
-                      }}
-                    >
-                      <Zap size={14} /> {runningId === s.id ? 'Running...' : 'Run Now'}
-                    </button>
-
-                    <button
-                      onClick={() => handleToggle(s)}
-                      title={s.enabled ? 'Pause automation' : 'Enable automation'}
-                      style={{
-                        background: s.enabled ? '#35373C' : '#2B2D31',
-                        border: '1px solid #383A40',
-                        color: s.enabled ? '#57F287' : '#949BA4',
-                        padding: '8px 12px',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        fontSize: '13px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px'
-                      }}
-                    >
-                      <Power size={14} /> {s.enabled ? 'Active' : 'Paused'}
-                    </button>
-
-                    <button
-                      onClick={() => handleDelete(s.id)}
-                      title="Delete automation"
-                      style={{
-                        background: 'transparent',
-                        border: 'none',
-                        color: '#ED4245',
-                        padding: '8px',
-                        cursor: 'pointer',
-                        borderRadius: '6px'
-                      }}
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
+                        lineHeight: 1.5,
+                        whiteSpace: 'pre-wrap',
+                        maxHeight: '75px',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}>
+                        {s.last_result}
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
           </div>
         )}
       </div>
+
+      {/* Expanded Result Modal */}
+      {selectedResult && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.75)',
+          backdropFilter: 'blur(6px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '16px'
+        }}>
+          <div style={{
+            background: '#1E1F22',
+            border: '1px solid #35373C',
+            borderRadius: '16px',
+            width: '100%',
+            maxWidth: '650px',
+            maxHeight: '85vh',
+            display: 'flex',
+            flexDirection: 'column',
+            boxShadow: '0 24px 60px rgba(0, 0, 0, 0.8)',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              padding: '18px 24px',
+              borderBottom: '1px solid #2B2D31',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              background: '#2B2D31'
+            }}>
+              <b style={{ color: '#fff', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <CheckCircle2 size={18} color="#57F287" /> {selectedResult.title} Output
+              </b>
+              <button
+                onClick={() => setSelectedResult(null)}
+                style={{ background: 'transparent', border: 'none', color: '#949BA4', cursor: 'pointer' }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
+              <pre style={{
+                color: '#E0E3EA',
+                fontSize: '13px',
+                lineHeight: 1.6,
+                whiteSpace: 'pre-wrap',
+                fontFamily: 'inherit',
+                margin: 0
+              }}>
+                {selectedResult.result}
+              </pre>
+            </div>
+            <div style={{ padding: '14px 24px', borderTop: '1px solid #2B2D31', display: 'flex', justifyContent: 'flex-end', background: '#18191C' }}>
+              <button
+                onClick={() => setSelectedResult(null)}
+                style={{
+                  padding: '8px 18px',
+                  background: '#5865F2',
+                  border: 'none',
+                  color: '#fff',
+                  borderRadius: '8px',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Create Automation Modal */}
       {isModalOpen && (
@@ -422,7 +723,7 @@ export const Scheduler: React.FC = () => {
             border: '1px solid #35373C',
             borderRadius: '16px',
             width: '100%',
-            maxWidth: '520px',
+            maxWidth: '560px',
             boxShadow: '0 24px 60px rgba(0, 0, 0, 0.8)',
             overflow: 'hidden'
           }}>
@@ -462,6 +763,39 @@ export const Scheduler: React.FC = () => {
                   <AlertCircle size={16} /> {formError}
                 </div>
               )}
+
+              {/* 1-Click Templates */}
+              <div style={{ marginBottom: '18px' }}>
+                <label style={{ display: 'block', fontSize: '11px', color: '#949BA4', marginBottom: '8px', textTransform: 'uppercase', fontWeight: 700 }}>
+                  Popular 1-Click Templates
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  {AUTOMATION_TEMPLATES.map(tpl => (
+                    <button
+                      key={tpl.title}
+                      type="button"
+                      onClick={() => handleApplyTemplate(tpl)}
+                      style={{
+                        background: '#2B2D31',
+                        border: '1px solid #383A40',
+                        color: '#E0E3EA',
+                        padding: '8px 10px',
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between'
+                      }}
+                    >
+                      <span>{tpl.title}</span>
+                      <ArrowRight size={12} color="#5865F2" />
+                    </button>
+                  ))}
+                </div>
+              </div>
 
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ display: 'block', fontSize: '12px', color: '#B5BAC1', marginBottom: '6px', textTransform: 'uppercase', fontWeight: 700 }}>
@@ -512,16 +846,18 @@ export const Scheduler: React.FC = () => {
                 </select>
               </div>
 
+              {/* Schedule Interval Selection */}
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ display: 'block', fontSize: '12px', color: '#B5BAC1', marginBottom: '6px', textTransform: 'uppercase', fontWeight: 700 }}>
-                  Schedule Interval (Natural language or Cron)
+                  Schedule Interval
                 </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. every 1 hour, @daily, every 30 minutes, 0 9 * * *"
-                  value={cronExpr}
-                  onChange={e => setCronExpr(e.target.value)}
+                <select
+                  value={intervalType}
+                  onChange={e => {
+                    const val = e.target.value;
+                    setIntervalType(val);
+                    if (val !== 'custom') setCronExpr(val);
+                  }}
                   style={{
                     width: '100%',
                     padding: '10px 12px',
@@ -533,37 +869,47 @@ export const Scheduler: React.FC = () => {
                     boxSizing: 'border-box',
                     marginBottom: '8px'
                   }}
-                />
-                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                  {['every 30 minutes', 'every 1 hour', 'every 6 hours', '@daily'].map(preset => (
-                    <button
-                      key={preset}
-                      type="button"
-                      onClick={() => setCronExpr(preset)}
-                      style={{
-                        background: '#2B2D31',
-                        border: '1px solid #383A40',
-                        color: '#949BA4',
-                        padding: '4px 8px',
-                        borderRadius: '6px',
-                        fontSize: '11px',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      {preset}
-                    </button>
-                  ))}
-                </div>
+                >
+                  <option value="every minute">Every 1 minute (Fast Testing)</option>
+                  <option value="every 5 minutes">Every 5 minutes</option>
+                  <option value="every 15 minutes">Every 15 minutes</option>
+                  <option value="every 30 minutes">Every 30 minutes</option>
+                  <option value="every 1 hour">Every 1 hour (@hourly)</option>
+                  <option value="every 4 hours">Every 4 hours</option>
+                  <option value="every 6 hours">Every 6 hours</option>
+                  <option value="@daily">Daily (@daily)</option>
+                  <option value="custom">Custom Cron Expression...</option>
+                </select>
+
+                {intervalType === 'custom' && (
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. */10 * * * *, @daily, every 2 hours"
+                    value={cronExpr}
+                    onChange={e => setCronExpr(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      background: '#111214',
+                      border: '1px solid #383A40',
+                      borderRadius: '8px',
+                      color: '#fff',
+                      fontSize: '14px',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                )}
               </div>
 
               <div style={{ marginBottom: '20px' }}>
                 <label style={{ display: 'block', fontSize: '12px', color: '#B5BAC1', marginBottom: '6px', textTransform: 'uppercase', fontWeight: 700 }}>
-                  Autonomous Goal / Instruction
+                  Autonomous Instruction / Task
                 </label>
                 <textarea
                   required
                   rows={4}
-                  placeholder="e.g. Scrape the latest top headlines on AI agents, summarize them in 3 bullet points, and push a WhatsApp message to my personal chat."
+                  placeholder="e.g. Scrape the latest top headlines on AI agents, summarize them in 3 bullet points, and write the briefing."
                   value={taskPrompt}
                   onChange={e => setTaskPrompt(e.target.value)}
                   style={{

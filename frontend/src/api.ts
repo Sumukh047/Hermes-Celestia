@@ -152,6 +152,8 @@ export interface ScheduleItem {
   last_run?: string;
   next_run?: string;
   last_status: string;
+  last_run_id?: string;
+  last_result?: string;
   created_at?: string;
 }
 

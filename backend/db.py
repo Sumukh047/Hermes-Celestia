@@ -25,6 +25,22 @@ def init_db():
         except Exception as e:
             print(f"[DB MIGRATION] Error migrating agents: {e}")
 
+        # Check if last_result, last_run_id exist in schedules
+        try:
+            cursor = conn.execute(text("PRAGMA table_info(schedules)"))
+            columns = [row[1] for row in cursor.fetchall()]
+            if "last_result" not in columns:
+                conn.execute(text("ALTER TABLE schedules ADD COLUMN last_result TEXT"))
+                conn.commit()
+            if "last_run_id" not in columns:
+                conn.execute(text("ALTER TABLE schedules ADD COLUMN last_run_id VARCHAR(32)"))
+                conn.commit()
+            # Clear stale running state on boot
+            conn.execute(text("UPDATE schedules SET last_status='ready' WHERE last_status='running'"))
+            conn.commit()
+        except Exception as e:
+            print(f"[DB MIGRATION] Error migrating schedules: {e}")
+
         # Ensure user Sam with password SamSam exists
         try:
             from .security import hash_password
