@@ -1631,11 +1631,10 @@ async def telegram_polling_worker():
                     agents = db.scalars(select(Agent).where(Agent.enabled == True)).all()
                     for a in agents:
                         tools = json.loads(a.tools_json or "[]")
-                        if "telegram.send" in tools:
+                        name_lower = a.name.lower()
+                        if "telegram.send" in tools or "telegram" in name_lower or "tele" in name_lower:
                             target_agent_id = a.id
                             break
-                    if not target_agent_id and agents:
-                        target_agent_id = agents[0].id
                 finally:
                     db.close()
 
@@ -1754,11 +1753,10 @@ async def discord_gateway_worker():
                                 agents = db.scalars(select(Agent).where(Agent.enabled == True)).all()
                                 for a in agents:
                                     tools = json.loads(a.tools_json or "[]")
-                                    if "discord.send" in tools:
+                                    name_lower = a.name.lower()
+                                    if "discord.send" in tools or "discord" in name_lower:
                                         target_agent_id = a.id
                                         break
-                                if not target_agent_id and agents:
-                                    target_agent_id = agents[0].id
                             finally:
                                 db.close()
 
@@ -1876,11 +1874,10 @@ async def email_watcher_worker():
                     agents = db.scalars(select(Agent).where(Agent.enabled == True)).all()
                     for a in agents:
                         tools = json.loads(a.tools_json or "[]")
-                        if any("email" in t for t in tools):
+                        name_lower = a.name.lower()
+                        if any("email" in t or "gmail" in t for t in tools) or "gmail" in name_lower or "email" in name_lower:
                             target_agent_id = a.id
                             break
-                    if not target_agent_id and agents:
-                        target_agent_id = agents[0].id
                 finally:
                     db.close()
 
@@ -1976,13 +1973,20 @@ async def scheduler_worker():
                 schedules = db.scalars(select(Schedule).where(Schedule.enabled == True)).all()
                 now = utc_now()
                 for s in schedules:
+                    # Self-healing: auto-recover if a schedule is stuck in 'running' for > 3 minutes
+                    if s.last_status == "running" and s.last_run:
+                        if (now - s.last_run).total_seconds() > 180:
+                            s.last_status = "completed"
+                            db.commit()
+
                     interval_sec = parse_schedule_interval_seconds(s.cron_expression)
                     should_run = False
                     if not s.last_run:
                         should_run = True
                     else:
                         elapsed = (now - s.last_run).total_seconds()
-                        if elapsed >= interval_sec:
+                        # Only trigger if elapsed and not already running in the background
+                        if elapsed >= interval_sec and s.last_status != "running":
                             should_run = True
 
                     if should_run:

@@ -481,7 +481,8 @@ export const Scheduler: React.FC = () => {
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {schedules.map(s => {
               const assignedAgent = agents.find(a => a.id === s.agent_id);
-              const isExecuting = s.last_status === 'running' || runningId === s.id;
+              const isRecentRun = s.last_run ? (Date.now() - new Date(s.last_run).getTime()) < 180000 : false;
+              const isExecuting = (s.last_status === 'running' && isRecentRun) || runningId === s.id;
               const nextRunRelative = formatRelativeNextRun(s.next_run);
 
               return (
