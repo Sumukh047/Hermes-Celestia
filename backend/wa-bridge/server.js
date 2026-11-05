@@ -237,6 +237,12 @@ function initWhatsAppClient() {
         client.initialize().catch(err => {
             console.error("[WhatsApp Bridge] Error in client.initialize():", err.message);
             isInitializing = false;
+            console.log("[WhatsApp Bridge] Will retry initialize in 3 seconds...");
+            setTimeout(() => {
+                if (!clientReady && !qrCodeData) {
+                    initWhatsAppClient();
+                }
+            }, 3000);
         });
     } catch (e) {
         console.error("[WhatsApp Bridge] Fatal error launching WhatsApp client:", e);
@@ -364,6 +370,6 @@ app.post('/send', async (req, res) => {
 });
 
 const PORT = 3001;
-app.listen(PORT, '127.0.0.1', () => {
-    console.log(`WhatsApp Bridge running on http://127.0.0.1:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`WhatsApp Bridge running on port ${PORT}`);
 });

@@ -24,15 +24,34 @@ function QRScanner() {
   const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
 
   useEffect(() => {
-    const checkQR = () => {
-      fetch('http://localhost:3001/qr')
-        .then(res => res.json())
-        .then(data => {
+    const checkQR = async () => {
+      try {
+        let data = null;
+        try {
+          const res = await fetch('/api/integrations/whatsapp/qr');
+          if (res.ok) data = await res.json();
+        } catch {}
+
+        if (!data || data.status === 'offline') {
+          try {
+            const res2 = await fetch('http://127.0.0.1:3001/qr');
+            if (res2.ok) data = await res2.json();
+          } catch {
+            const res3 = await fetch('http://localhost:3001/qr');
+            if (res3.ok) data = await res3.json();
+          }
+        }
+
+        if (data) {
           setStatus(data.status);
           if (data.phone) setPhone(data.phone);
           if (data.qr) setQrCode(data.qr);
-        })
-        .catch(() => setStatus('offline'));
+        } else {
+          setStatus('offline');
+        }
+      } catch {
+        setStatus('offline');
+      }
     };
 
     checkQR();

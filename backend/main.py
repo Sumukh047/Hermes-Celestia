@@ -767,6 +767,32 @@ async def unlink_whatsapp():
         return {"success": False, "error": f"Failed to contact WhatsApp bridge: {str(e)}"}
 
 
+@router.get("/integrations/whatsapp/qr", tags=["Integrations"])
+async def get_whatsapp_qr():
+    """Proxies QR code data from local WhatsApp bridge microservice."""
+    try:
+        async with httpx.AsyncClient(timeout=5) as client:
+            r = await client.get("http://127.0.0.1:3001/qr")
+            if r.status_code == 200:
+                return r.json()
+            return {"status": "offline", "qr": None}
+    except Exception:
+        return {"status": "offline", "qr": None}
+
+
+@router.get("/integrations/whatsapp/status", tags=["Integrations"])
+async def get_whatsapp_status():
+    """Proxies pairing and connection status from local WhatsApp bridge."""
+    try:
+        async with httpx.AsyncClient(timeout=5) as client:
+            r = await client.get("http://127.0.0.1:3001/status")
+            if r.status_code == 200:
+                return r.json()
+            return {"ready": False, "status": "offline"}
+    except Exception:
+        return {"ready": False, "status": "offline"}
+
+
 # ==============================================================================
 # Telegram Bot Dispatcher & Multi-turn Sessions
 # ==============================================================================
