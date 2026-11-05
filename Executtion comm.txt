@@ -1,0 +1,11 @@
+T1:
+cd "backend\wa-bridge"
+node server.js
+
+T2:
+.\.venv\Scripts\Activate.ps1
+uvicorn backend.main:app --host 127.0.0.1 --port 8790 --reload
+
+T3:
+cd frontend
+npm run dev

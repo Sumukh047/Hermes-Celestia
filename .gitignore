@@ -1,0 +1,42 @@
+# Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+
+# Python cache & artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Environment and sensitive keys
+.env
+*.key
+.secret_key
+
+# Databases & local sessions
+*.db
+*.sqlite
+*.sqlite3
+
+# WhatsApp Bridge auth & cache
+.wwebjs_cache/
+.wwebjs_auth/
+backend/wa-bridge/.wwebjs_auth/
+backend/wa-bridge/.wwebjs_cache/
+
+# Node & Frontend build
+node_modules/
+frontend/node_modules/
+backend/wa-bridge/node_modules/
+frontend/dist/
+desktop/target/
+
+# OS and temp files
+ddg.html
+.DS_Store
+Thumbs.db
+
+*.tsbuildinfo
