@@ -1898,187 +1898,80 @@
       </div>
 
       <!-- Code Deep Dive Tabs -->
-      <div class="code-window">
-        <div class="code-header">
-          <div class="code-dots">
-            <span class="dot dot-red"></span>
-            <span class="dot dot-yellow"></span>
-            <span class="dot dot-green"></span>
+            <!-- VISUAL REACT COGNITIVE ARCHITECTURE BREAKDOWN -->
+      <div style="margin: 36px 0;">
+        <h3 style="font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 8px;">
+          The 4 Pillars of the Hermes Cognitive Execution Engine
+        </h3>
+        <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 24px;">
+          Rather than relying on opaque cloud APIs, Hermes operates an explicit, transparent ReAct cognitive pipeline
+          running entirely inside your local machine's memory:
+        </p>
+
+        <div class="grid-2">
+          <!-- Pillar 1 -->
+          <div class="feature-card tilt-card" style="border-left: 4px solid var(--accent-discord);">
+            <div class="tilt-glare"></div>
+            <div class="feature-icon-wrapper" style="color: var(--accent-discord);">&#129504;</div>
+            <h3>1. Dynamic Prompt &amp; Persona Compilation</h3>
+            <p>
+              Before every turn, Hermes dynamically constructs an anti-hallucination system prompt. It combines the
+              agent's assigned persona, verified memory from the Obsidian Second Brain, and strict JSON schemas of all
+              registered tools. Crucially, the prompt imposes strict factual anchors forbidding the model from inventing dates,
+              senders, or action outcomes.
+            </p>
+            <div class="feature-card-footer">
+              <span style="color: var(--accent-discord); font-weight: 600;">Phase: Context Assembly</span>
+              <span>Local VRAM Execution</span>
+            </div>
           </div>
-          <div class="code-title">
-            <span>&#128196; backend/runtime.py &mdash; Multi-Turn Agent Loop</span>
+
+          <!-- Pillar 2 -->
+          <div class="feature-card tilt-card" style="border-left: 4px solid var(--accent-blue);">
+            <div class="tilt-glare"></div>
+            <div class="feature-icon-wrapper" style="color: var(--accent-blue);">&#9889;</div>
+            <h3>2. Local LM Studio GGUF Inference</h3>
+            <p>
+              Inference requests are dispatched directly to LM Studio at <code class="inline-code">http://127.0.0.1:1234/v1</code>.
+              Your prompts, private emails, and company communications are processed purely within your GPU's VRAM.
+              Zero prompt tokens ever leave your physical device, eliminating subscription fees and data leakage.
+            </p>
+            <div class="feature-card-footer">
+              <span style="color: var(--accent-blue); font-weight: 600;">Phase: Cognitive Inference</span>
+              <span>Zero Cloud Egress</span>
+            </div>
           </div>
-          <button class="btn-copy" onclick="copySnippet('code-runtime-loop')">Copy Code</button>
-        </div>
 
-        <div class="tabs-header">
-          <button class="tab-btn active" onclick="switchTab(event, 'tab-loop-code')">Execution Loop</button>
-          <button class="tab-btn" onclick="switchTab(event, 'tab-system-prompt')">Dynamic System Prompt</button>
-          <button class="tab-btn" onclick="switchTab(event, 'tab-hitl-guard')">HITL Security Guard</button>
-          <button class="tab-btn" onclick="switchTab(event, 'tab-event-hub')">EventHub PubSub</button>
-        </div>
-
-        <!-- Tab 1: Execution Loop -->
-        <div id="tab-loop-code" class="tab-pane active">
-          <div class="code-content">
-            <pre id="code-runtime-loop"><code>async def execute_agent_turn(agent_id: str, prompt: str, session_id: str, max_turns: int = 8):
-    """
-    Hermes Multi-Turn Cognitive Execution Loop.
-    Executes iterative ReAct cycles against local LM Studio instance.
-    """
-    agent = await get_agent_by_id(agent_id)
-    history = await load_session_history(session_id)
-    tools = await get_registered_tools_for_agent(agent_id)
-
-    # 1. Compile System Prompt with Persona & Tool Schemas
-    system_prompt = build_grounded_system_prompt(agent, tools)
-    messages = [{"role": "system", "content": system_prompt}] + history + [{"role": "user", "content": prompt}]
-
-    turn = 0
-    await event_hub.broadcast(session_id, {"event": "agent_start", "agent_id": agent_id, "prompt": prompt})
-
-    while turn < max_turns:
-        turn += 1
-        # 2. Call Local LM Studio Inference Engine (Zero egress)
-        response = await lm_client.chat.completions.create(
-            model=agent.model_name or "local-model",
-            messages=messages,
-            temperature=agent.temperature or 0.3,
-            tools=[tool.openai_schema for tool in tools] if tools else None,
-            tool_choice="auto" if tools else "none"
-        )
-
-        choice = response.choices[0]
-        # Emit reasoning / thought telemetry
-        if choice.message.content:
-            await event_hub.broadcast(session_id, {
-                "event": "agent_thought",
-                "turn": turn,
-                "content": choice.message.content
-            })
-
-        # 3. Check for Tool Invocation Requests
-        if choice.message.tool_calls:
-            for tool_call in choice.message.tool_calls:
-                tool_name = tool_call.function.name
-                args = json.loads(tool_call.function.arguments)
-
-                # 4. Check Human-in-the-Loop (HITL) Policy
-                if is_destructive_action(tool_name, args):
-                    approval = await request_hitl_approval(session_id, tool_name, args)
-                    if not approval.approved:
-                        messages.append({"role": "tool", "name": tool_name, "content": "Action rejected by human operator."})
-                        continue
-
-                # 5. Execute Grounded Tool
-                await event_hub.broadcast(session_id, {"event": "tool_start", "tool": tool_name, "args": args})
-                result = await tool_registry.dispatch(tool_name, args)
-                await event_hub.broadcast(session_id, {"event": "tool_finish", "tool": tool_name, "result": result})
-
-                messages.append({"role": "tool", "name": tool_name, "content": json.dumps(result)})
-        else:
-            # Final Natural Language Answer Reached
-            await event_hub.broadcast(session_id, {
-                "event": "agent_complete",
-                "final_answer": choice.message.content,
-                "total_turns": turn
-            })
-            await persist_message(session_id, "assistant", choice.message.content)
-            return choice.message.content
-
-    return "Max cognitive turns reached without convergence."</code></pre>
+          <!-- Pillar 3 -->
+          <div class="feature-card tilt-card" style="border-left: 4px solid var(--accent-red);">
+            <div class="tilt-glare"></div>
+            <div class="feature-icon-wrapper" style="color: var(--accent-red);">&#128737;</div>
+            <h3>3. Human-In-The-Loop (HITL) Safety Gate</h3>
+            <p>
+              Whenever the local model requests to execute a potentially destructive action &mdash; such as running a shell
+              command, sending an outbound email reply, or updating database records &mdash; the runtime automatically pauses.
+              It generates a one-time cryptographic approval token and broadcasts an authorization modal to the UI before proceeding.
+            </p>
+            <div class="feature-card-footer">
+              <span style="color: var(--accent-red); font-weight: 600;">Phase: Safety Interception</span>
+              <span>Zero Unintended Actions</span>
+            </div>
           </div>
-        </div>
 
-        <!-- Tab 2: Dynamic System Prompt -->
-        <div id="tab-system-prompt" class="tab-pane">
-          <div class="code-content">
-            <pre><code>def build_grounded_system_prompt(agent, tools) -> str:
-    """
-    Compiles anti-hallucination system prompt grounded in local memory and active tools.
-    """
-    prompt_parts = [
-        f"You are {agent.name}, an autonomous agent operating within Hermes Agent Studio.",
-        f"AGENT UUID: {agent.id}",
-        f"ROLE & PERSONA: {agent.system_prompt or 'You are an intelligent, factual AI assistant.'}",
-        "",
-        "### STRICT GROUNDING & ANTI-HALLUCINATION RULES:",
-        "1. Never invent email senders, subjects, dates, or body text. Rely ONLY on data returned by get_unread_emails or search_inbox.",
-        "2. If an email body contains no actionable content, explicitly state: 'No actionable content found.'",
-        "3. When invoking tools, supply valid JSON matching the exact schema properties.",
-        "4. All thoughts must be concise, analytical, and focused on accomplishing the objective.",
-        "",
-        "### AVAILABLE TOOLS CATALOG:"
-    ]
-    for tool in tools:
-        prompt_parts.append(f"- {tool.name}: {tool.description}")
-        prompt_parts.append(f"  Parameters: {json.dumps(tool.parameters)}")
-
-    return "\n".join(prompt_parts)</code></pre>
-          </div>
-        </div>
-
-        <!-- Tab 3: HITL Guard -->
-        <div id="tab-hitl-guard" class="tab-pane">
-          <div class="code-content">
-            <pre><code>DESTRUCTIVE_TOOLS = {
-    "execute_system_command",
-    "send_email_reply",
-    "delete_database_record",
-    "render_workflow_cancel",
-    "post_discord_announcement"
-}
-
-def is_destructive_action(tool_name: str, args: dict) -> bool:
-    """
-    Determines whether a tool action requires human oversight.
-    """
-    if tool_name in DESTRUCTIVE_TOOLS:
-        return True
-    if tool_name == "sql_query" and any(k in args.get("query", "").lower() for k in ["drop", "truncate", "delete", "alter"]):
-        return True
-    return False
-
-async def request_hitl_approval(session_id: str, tool_name: str, args: dict) -> ApprovalResult:
-    token = str(uuid.uuid4())
-    await event_hub.broadcast(session_id, {
-        "event": "hitl_requested",
-        "approval_token": token,
-        "tool": tool_name,
-        "arguments": args
-    })
-    # Suspends execution until user clicks 'Approve' in UI or via Discord modal
-    return await approval_queue.wait_for_decision(token, timeout_seconds=120)</code></pre>
-          </div>
-        </div>
-
-        <!-- Tab 4: EventHub PubSub -->
-        <div id="tab-event-hub" class="tab-pane">
-          <div class="code-content">
-            <pre><code>class EventHub:
-    """
-    In-memory asynchronous pub/sub broadcaster for real-time Agent UI streaming.
-    """
-    def __init__(self):
-        self._subscribers: dict[str, set[asyncio.Queue]] = defaultdict(set)
-
-    async def subscribe(self, session_id: str) -> asyncio.Queue:
-        q = asyncio.Queue(maxsize=100)
-        self._subscribers[session_id].add(q)
-        return q
-
-    async def unsubscribe(self, session_id: str, q: asyncio.Queue):
-        if session_id in self._subscribers and q in self._subscribers[session_id]:
-            self._subscribers[session_id].remove(q)
-
-    async def broadcast(self, session_id: str, payload: dict):
-        payload["timestamp"] = datetime.utcnow().isoformat() + "Z"
-        if session_id in self._subscribers:
-            for q in list(self._subscribers[session_id]):
-                try:
-                    q.put_nowait(payload)
-                except asyncio.QueueFull:
-                    pass</code></pre>
+          <!-- Pillar 4 -->
+          <div class="feature-card tilt-card" style="border-left: 4px solid var(--accent-green);">
+            <div class="tilt-glare"></div>
+            <div class="feature-icon-wrapper" style="color: var(--accent-green);">&#128225;</div>
+            <h3>4. Real-Time EventHub Telemetry Streaming</h3>
+            <p>
+              Every cognitive step &mdash; from intermediate thoughts, tool invocations, execution outputs, and token counts &mdash;
+              is broadcast instantaneously via asynchronous WebSockets. Both the web dashboard and connected chat channels
+              (Discord, WhatsApp, Telegram) receive live streaming updates without polling lag.
+            </p>
+            <div class="feature-card-footer">
+              <span style="color: var(--accent-green); font-weight: 600;">Phase: Telemetry Pub/Sub</span>
+              <span>WebSocket /ws/agent-events</span>
+            </div>
           </div>
         </div>
       </div>
@@ -2411,53 +2304,51 @@ async def request_hitl_approval(session_id: str, tool_name: str, args: dict) -> 
           Hermes solves this completely with our deterministic multipart MIME extraction engine.
         </p>
 
+                <!-- VISUAL COMPARISON: NAIVE LLM VS HERMES GROUNDING -->
         <div class="grid-2">
-          <div class="code-window">
-            <div class="code-header">
-              <div class="code-dots"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span></div>
-              <div class="code-title">&#128196; backend/main.py: extract_email_body_clean()</div>
-              <button class="btn-copy" onclick="copySnippet('code-mime-parser')">Copy</button>
+          <!-- The Danger: Naive LLM Parsing -->
+          <div class="feature-card tilt-card" style="border-top: 3px solid var(--accent-red); background: rgba(237, 66, 69, 0.04);">
+            <div class="tilt-glare"></div>
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
+              <span style="background: rgba(237, 66, 69, 0.2); color: var(--accent-red); padding: 4px 10px; border-radius: var(--radius-pill); font-size: 11px; font-weight: 700; text-transform: uppercase;">
+                The Problem
+              </span>
+              <h4 style="font-size: 17px; color: #fff;">Naive LLM Parsing (Severe Hallucination)</h4>
             </div>
-            <div class="code-content">
-              <pre id="code-mime-parser"><code>def extract_email_body_clean(msg: email.message.Message) -> str:
-    """
-    Recursively decodes multipart RFC 822 emails.
-    Prioritizes text/plain over text/html to avoid injecting CSS/JS.
-    """
-    body = ""
-    if msg.is_multipart():
-        for part in msg.walk():
-            ctype = part.get_content_type()
-            cdisp = str(part.get("Content-Disposition", ""))
-            if ctype == "text/plain" and "attachment" not in cdisp:
-                payload = part.get_payload(decode=True)
-                if payload:
-                    charset = part.get_content_charset() or "utf-8"
-                    body = payload.decode(charset, errors="replace")
-                    break
-        # Fallback to HTML parsing if text/plain absent
-        if not body:
-            for part in msg.walk():
-                if part.get_content_type() == "text/html":
-                    payload = part.get_payload(decode=True)
-                    if payload:
-                        charset = part.get_content_charset() or "utf-8"
-                        raw_html = payload.decode(charset, errors="replace")
-                        body = BeautifulSoup(raw_html, "html.parser").get_text()
-                        break
-    else:
-        payload = msg.get_payload(decode=True)
-        if payload:
-            charset = msg.get_content_charset() or "utf-8"
-            body = payload.decode(charset, errors="replace")
-
-    # Clean whitespace and normalize lines
-    lines = [line.strip() for line in body.splitlines() if line.strip()]
-    return "\n".join(lines)[:4000]</code></pre>
+            <p style="font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 14px;">
+              Standard cloud agent setups pass uncleaned HTML strings, base64 images, or empty summaries to the model.
+              When asked to "summarize latest email", the LLM lacks grounded facts and fabricates plausible-sounding fiction:
+            </p>
+            <div style="background: var(--bg-code); border: 1px solid rgba(237, 66, 69, 0.3); border-radius: var(--radius-sm); padding: 14px; font-size: 12px; font-family: var(--font-mono); color: #FFA1A2; line-height: 1.5;">
+              &#10060; <strong>Subject:</strong> "Exciting New Project Opportunity"<br>
+              &#10060; <strong>Body:</strong> "They're looking for someone with skills in [area]. They want to set up a meeting next week..."<br>
+              <em style="color: var(--text-dim); font-size: 11px;">(Completely invented out of thin air &mdash; never in user's inbox!)</em>
             </div>
           </div>
 
-          <div class="feature-card" style="justify-content: center;">
+          <!-- The Hermes Solution -->
+          <div class="feature-card tilt-card" style="border-top: 3px solid var(--accent-green); background: rgba(87, 242, 135, 0.04);">
+            <div class="tilt-glare"></div>
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
+              <span style="background: rgba(87, 242, 135, 0.2); color: var(--accent-green); padding: 4px 10px; border-radius: var(--radius-pill); font-size: 11px; font-weight: 700; text-transform: uppercase;">
+                Hermes Grounded Solution
+              </span>
+              <h4 style="font-size: 17px; color: #fff;">RFC 822 Deterministic MIME Engine</h4>
+            </div>
+            <p style="font-size: 13px; color: var(--text-muted); line-height: 1.6; margin-bottom: 14px;">
+              Hermes traverses the raw multipart MIME tree, isolates pure <code class="inline-code">text/plain</code> parts,
+              strips hidden tracking pixels and CSS scripts with BeautifulSoup, and feeds literal headers:
+            </p>
+            <div style="background: var(--bg-code); border: 1px solid rgba(87, 242, 135, 0.3); border-radius: var(--radius-sm); padding: 14px; font-size: 12px; font-family: var(--font-mono); color: #8BF7AF; line-height: 1.5;">
+              &#9989; <strong>From:</strong> Parvathi &lt;parvathi@render.com&gt;<br>
+              &#9989; <strong>Subject:</strong> "Workflows Prize Announcement"<br>
+              &#9989; <strong>Verified Facts:</strong> $500 for 1st place, $300 for 2nd place. Must implement Render Workflows.<br>
+              <em style="color: var(--text-dim); font-size: 11px;">(100% grounded in physical email text with zero hallucination!)</em>
+            </div>
+          </div>
+        </div>
+
+        <div class="feature-card" style="justify-content: center; margin-top: 20px;">
             <h4 style="font-size: 17px; margin-bottom: 12px; color: #fff;">Factual Grounding Guardrails:</h4>
             <ul style="list-style: none; display: flex; flex-direction: column; gap: 12px; font-size: 13px; color: var(--text-muted);">
               <li style="display: flex; gap: 10px; align-items: flex-start;">
@@ -2602,62 +2493,36 @@ async def request_hitl_approval(session_id: str, tool_name: str, args: dict) -> 
           Hermes implements an intelligent interval compiler that accepts both natural English phrases and standard cron expressions.
         </p>
 
-        <div class="code-window">
-          <div class="code-header">
-            <div class="code-dots"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span></div>
-            <div class="code-title">&#128196; backend/main.py: scheduler_worker() Loop &amp; Interval Evaluator</div>
-            <button class="btn-copy" onclick="copySnippet('code-scheduler-eval')">Copy Code</button>
+                <!-- VISUAL ARCHITECTURE: 15-SECOND TICK SCHEDULER -->
+        <div class="grid-3" style="margin: 24px 0;">
+          <div class="feature-card tilt-card">
+            <div class="tilt-glare"></div>
+            <div class="feature-icon-wrapper" style="color: var(--accent-green);">&#9201;</div>
+            <h4 style="font-size: 16px; margin-bottom: 8px;">1. Continuous 15s Lifespan Loop</h4>
+            <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">
+              Runs as a native background async worker inside FastAPI's application lifespan.
+              Every 15 seconds, it queries active automations in SQLite without consuming background CPU cycles.
+            </p>
           </div>
-          <div class="code-content">
-            <pre id="code-scheduler-eval"><code>async def scheduler_worker():
-    """
-    Continuous 15-second tick loop inspecting configured automations in SQLite.
-    Executes grounded agent prompts and logs execution history.
-    """
-    while True:
-        try:
-            await asyncio.sleep(15)
-            async with aiosqlite.connect(DB_PATH) as db:
-                db.row_factory = aiosqlite.Row
-                async with db.execute("SELECT * FROM automations WHERE status = 'active'") as cur:
-                    jobs = await cur.fetchall()
 
-            now = datetime.utcnow()
-            for job in jobs:
-                if should_execute_job(job["schedule_expr"], job["last_run"], now):
-                    # Mark status as running
-                    await update_job_status(job["id"], "running")
-                    
-                    # Execute agent turn with factual grounding
-                    output = await execute_agent_turn(
-                        agent_id=job["agent_id"],
-                        prompt=job["prompt"],
-                        session_id=f"auto_{job['id']}_{int(now.timestamp())}"
-                    )
-                    
-                    # Persist last result and execution timestamp
-                    await record_job_completion(job["id"], output, now)
-        except Exception as e:
-            logger.error(f"Scheduler daemon error: {e}", exc_info=True)
+          <div class="feature-card tilt-card">
+            <div class="tilt-glare"></div>
+            <div class="feature-icon-wrapper" style="color: var(--accent-yellow);">&#128483;</div>
+            <h4 style="font-size: 16px; margin-bottom: 8px;">2. Natural Language Compiler</h4>
+            <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">
+              Parses intuitive English expressions (&ldquo;every minute&rdquo;, &ldquo;every 30 minutes&rdquo;,
+              &ldquo;every 6 hours&rdquo;, &ldquo;daily at 09:00&rdquo;) as well as standard Unix 5-field cron strings.
+            </p>
+          </div>
 
-def should_execute_job(expr: str, last_run_str: str | None, now: datetime) -> bool:
-    """
-    Parses expressions like 'every minute', 'every 30 minutes', 'every 2 hours', 'daily at 09:00'.
-    """
-    if not last_run_str:
-        return True
-    last_run = datetime.fromisoformat(last_run_str)
-    elapsed = (now - last_run).total_seconds()
-
-    m = re.match(r"every\s+(\d+)?\s*(minute|hour|day)s?", expr.lower().strip())
-    if m:
-        val = int(m.group(1)) if m.group(1) else 1
-        unit = m.group(2)
-        multiplier = 60 if unit == "minute" else 3600 if unit == "hour" else 86400
-        return elapsed >= (val * multiplier)
-
-    # Standard Cron Expression evaluation fallback
-    return croniter(expr, last_run).get_next(datetime) <= now</code></pre>
+          <div class="feature-card tilt-card">
+            <div class="tilt-glare"></div>
+            <div class="feature-icon-wrapper" style="color: var(--accent-discord);">&#128190;</div>
+            <h4 style="font-size: 16px; margin-bottom: 8px;">3. Deduplication &amp; Caching</h4>
+            <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">
+              Maintains strict execution timestamps (<code class="inline-code">last_run</code>) and caches outputs
+              (<code class="inline-code">last_result</code>) directly in SQLite to guarantee zero redundant triggers.
+            </p>
           </div>
         </div>
       </div>
@@ -2717,86 +2582,47 @@ def should_execute_job(expr: str, last_run_str: str | None, now: datetime) -> bo
           Workflows allow executing mission-critical agent jobs with automatic retries and zero worker management.
         </p>
 
-        <div class="grid-2">
-          <!-- Code Block: workflow_app.py -->
-          <div class="code-window">
-            <div class="code-header">
-              <div class="code-dots"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span></div>
-              <div class="code-title">&#128196; workflows/workflow_app.py: @app.task Pipeline</div>
-              <button class="btn-copy" onclick="copySnippet('code-render-workflow')">Copy</button>
-            </div>
-            <div class="code-content">
-              <pre id="code-render-workflow"><code>from render_workflows import WorkflowApp, RetryPolicy
-import httpx
-
-app = WorkflowApp(name="hermes-agent-workflows")
-
-# Configure 3x exponential backoff retry policy
-retry_policy = RetryPolicy(
-    max_attempts=3,
-    initial_interval=1.0,
-    backoff_factor=2.0
-)
-
-@app.task(retries=retry_policy)
-async def fetch_agent_context(agent_id: str) -> dict:
-    """Step 1: Pulls agent configuration and memory safely."""
-    async with httpx.AsyncClient() as client:
-        res = await client.get(f"https://api.hermes-os.internal/agents/{agent_id}")
-        return res.json()
-
-@app.task(retries=retry_policy)
-async def execute_durable_agent_task(context: dict, prompt: str) -> dict:
-    """Step 2: Executes durable multi-turn agent computation."""
-    # Durable step automatically checkpoints progress
-    result = await run_cognitive_pipeline(context, prompt)
-    return {"status": "SUCCESS", "output": result}
-
-@app.workflow
-async def hermes_cloud_execution_flow(agent_id: str, prompt: str):
-    """Main Durable Workflow Graph Entrypoint."""
-    context = await fetch_agent_context(agent_id)
-    execution = await execute_durable_agent_task(context, prompt)
-    return execution</code></pre>
+                <!-- VISUAL ARCHITECTURE: RENDER WORKFLOWS CLOUD DURABILITY -->
+        <div class="grid-3" style="margin: 24px 0;">
+          <div class="feature-card tilt-card">
+            <div class="tilt-glare"></div>
+            <div class="feature-icon-wrapper" style="color: var(--accent-cyan);">&#128221;</div>
+            <h4 style="font-size: 16px; margin-bottom: 8px;">Code-First @app.task Graph</h4>
+            <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">
+              Workflows are declared purely as native Python async functions decorated with <code class="inline-code">@app.task</code>.
+              Render automatically tracks execution lineage, variable state, and outputs in serverless cloud storage.
+            </p>
+            <div class="feature-card-footer">
+              <span style="color: var(--accent-cyan);">render_workflows SDK</span>
+              <span>Zero Broker Setup</span>
             </div>
           </div>
 
-          <!-- Code Block: render.yaml -->
-          <div class="code-window">
-            <div class="code-header">
-              <div class="code-dots"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span></div>
-              <div class="code-title">&#128196; render.yaml: Infrastructure-as-Code Spec</div>
-              <button class="btn-copy" onclick="copySnippet('code-render-yaml')">Copy</button>
+          <div class="feature-card tilt-card">
+            <div class="tilt-glare"></div>
+            <div class="feature-icon-wrapper" style="color: var(--accent-cyan);">&#8634;</div>
+            <h4 style="font-size: 16px; margin-bottom: 8px;">3x Exponential Backoff</h4>
+            <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">
+              Equipped with a built-in <code class="inline-code">RetryPolicy(max_attempts=3, backoff_factor=2.0)</code>.
+              If a transient network glitch or LLM rate-limit occurs, the task retries with exponential delay without losing state.
+            </p>
+            <div class="feature-card-footer">
+              <span style="color: var(--accent-cyan);">Self-Healing Execution</span>
+              <span>Resilient Checkpoints</span>
             </div>
-            <div class="code-content">
-              <pre id="code-render-yaml"><code>services:
-  # 1. Hermes Agent Studio Web Server
-  - type: web
-    name: hermes-agent-studio
-    env: python
-    region: oregon
-    plan: starter
-    buildCommand: "pip install -r requirements.txt &amp;&amp; cd frontend &amp;&amp; npm install &amp;&amp; npm run build"
-    startCommand: "uvicorn backend.main:app --host 0.0.0.0 --port 10000"
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.0
-      - key: RENDER_WORKFLOW_ENABLED
-        value: "true"
+          </div>
 
-  # 2. Render Workflows Distributed Task Worker
-  - type: workflow
-    name: hermes-workflows-worker
-    env: python
-    region: oregon
-    plan: starter
-    entrypoint: "workflows/workflow_app.py:app"
-    envVars:
-      - key: HERMES_CORE_URL
-        fromService:
-          type: web
-          name: hermes-agent-studio
-          property: host</code></pre>
+          <div class="feature-card tilt-card">
+            <div class="tilt-glare"></div>
+            <div class="feature-icon-wrapper" style="color: var(--accent-cyan);">&#9729;</div>
+            <h4 style="font-size: 16px; margin-bottom: 8px;">render.yaml Infrastructure-as-Code</h4>
+            <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">
+              Declarative blueprint binding the FastAPI Web Service (<code class="inline-code">type: web</code>) with the distributed
+              workflow worker (<code class="inline-code">type: workflow</code>) in a single unified deployment.
+            </p>
+            <div class="feature-card-footer">
+              <span style="color: var(--accent-cyan);">render.yaml Spec</span>
+              <span>Single Git Push</span>
             </div>
           </div>
         </div>
@@ -2926,54 +2752,50 @@ async def hermes_cloud_execution_flow(agent_id: str, prompt: str):
           spawns sub-daemons with explicit working directories, and initiates the tunnel.
         </p>
 
-        <div class="code-window">
-          <div class="code-header">
-            <div class="code-dots"><span class="dot dot-red"></span><span class="dot dot-yellow"></span><span class="dot dot-green"></span></div>
-            <div class="code-title">&#128196; START_HERMES_STUDIO.bat &mdash; Production Multi-Process Orchestrator</div>
-            <button class="btn-copy" onclick="copySnippet('code-bat-file')">Copy Code</button>
+                <!-- VISUAL 4-STAGE BOOT LIFECYCLE FLOWCHART -->
+        <div class="stepper" style="margin: 24px 0;">
+          <div class="step-item tilt-card">
+            <div class="step-num" style="background: rgba(88,101,242,0.2); border-color: var(--accent-discord); color: #fff;">1</div>
+            <div class="step-content">
+              <div class="step-title">Automated Port Conflict Resolution</div>
+              <div class="step-desc">
+                Inspects <code class="inline-code">netstat</code> for lingering processes on ports <strong>8790</strong> (FastAPI),
+                <strong>3001</strong> (WhatsApp Bridge), and <strong>5173</strong>. Automatically frees conflicting sockets via <code class="inline-code">taskkill</code>.
+              </div>
+            </div>
           </div>
-          <div class="code-content">
-            <pre id="code-bat-file"><code>@echo off
-title Hermes Agent Studio Launcher
-color 0A
 
-echo ===================================================
-echo       STARTING HERMES AGENT STUDIO (LOCAL AI OS)
-echo ===================================================
-echo.
+          <div class="step-item tilt-card">
+            <div class="step-num" style="background: rgba(37,211,102,0.2); border-color: var(--accent-whatsapp); color: #fff;">2</div>
+            <div class="step-content">
+              <div class="step-title">WhatsApp Web Bridge Microservice Launch</div>
+              <div class="step-desc">
+                Launches Node.js Puppeteer bridge on port <strong>3001</strong> with working directory locked to <code class="inline-code">backend/wa-bridge</code>
+                and cached LocalAuth session tokens.
+              </div>
+            </div>
+          </div>
 
-cd /d "%~dp0"
+          <div class="step-item tilt-card">
+            <div class="step-num" style="background: rgba(70,227,183,0.2); border-color: var(--accent-cyan); color: #fff;">3</div>
+            <div class="step-content">
+              <div class="step-title">FastAPI Master Server &amp; Discord Gateway Startup</div>
+              <div class="step-desc">
+                Starts Python Uvicorn engine on port <strong>8790</strong>, mounting the compiled React SPA, establishing the SQLite connection pool,
+                and initializing the Discord Gateway v10 WebSocket.
+              </div>
+            </div>
+          </div>
 
-:: 1. Self-Healing: Clean Port Collisions on 8790, 3001, and 5173
-echo [1/4] Checking and clearing port conflicts...
-for /f "tokens=5" %%a in ('netstat -aon ^| findstr :8790') do taskkill /F /PID %%a >nul 2>&1
-for /f "tokens=5" %%a in ('netstat -aon ^| findstr :3001') do taskkill /F /PID %%a >nul 2>&1
-
-:: 2. Launch WhatsApp Web Bridge Daemon (Port 3001)
-echo [2/4] Starting WhatsApp Web Puppeteer Bridge...
-start "WhatsApp Bridge" /D "%~dp0backend\wa-bridge" cmd /k "node server.js"
-
-:: 3. Launch FastAPI Master Server (Port 8790 with Static SPA mount)
-echo [3/4] Starting FastAPI Server with SQLite and Discord Gateway...
-start "Hermes Backend" /D "%~dp0" cmd /k ".\.venv\Scripts\python.exe -m uvicorn backend.main:app --host 0.0.0.0 --port 8790"
-
-:: Wait 3 seconds for sockets to bind
-timeout /t 3 /nobreak >nul
-
-:: 4. Launch Dedicated Ngrok HTTPS Tunnel
-echo [4/4] Opening Ngrok HTTPS Tunnel to Internet...
-start "Ngrok Tunnel" /D "%~dp0" cmd /k "ngrok http --domain=only-unreformable-doris.ngrok-free.dev 8790"
-
-echo.
-echo ===================================================
-echo   HERMES AGENT STUDIO LAUNCH COMPLETE!
-echo   Local Access:      http://localhost:8790
-echo   Public HTTPS Tunnel: https://only-unreformable-doris.ngrok-free.dev
-echo ===================================================
-echo.
-timeout /t 2 /nobreak >nul
-start http://localhost:8790
-pause</code></pre>
+          <div class="step-item tilt-card">
+            <div class="step-num" style="background: rgba(254,231,92,0.2); border-color: var(--accent-yellow); color: #fff;">4</div>
+            <div class="step-content">
+              <div class="step-title">Ngrok TLS 1.3 Tunnel &amp; Auto-Launch Browser</div>
+              <div class="step-desc">
+                Exposes port 8790 via dedicated custom domain <code class="inline-code">https://only-unreformable-doris.ngrok-free.dev</code>,
+                then automatically opens the default web browser to the local studio workbench.
+              </div>
+            </div>
           </div>
         </div>
       </div>
