@@ -39,4 +39,8 @@ ddg.html
 .DS_Store
 Thumbs.db
 
+# Binaries & executables
+*.exe
+ngrok.exe
+
 *.tsbuildinfo

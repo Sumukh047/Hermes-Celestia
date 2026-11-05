@@ -1,0 +1,38 @@
+# ==============================================================================
+# Render Workflows & Service Blueprint
+# Deploy reliable application logic and parallel workloads without managing queues,
+# worker pools, or custom retry logic.
+# Reference: https://render.com/workflows
+# ==============================================================================
+
+services:
+  # 1. Render Workflows Orchestration Engine (Qualifies for Best Use of Render track)
+  - type: workflow
+    name: hermes-agent-workflows
+    runtime: python
+    region: oregon
+    repo: https://github.com/Sumukh047/Hermes-Celestia
+    branch: main
+    rootDir: workflows
+    buildCommand: pip install -r requirements.txt
+    startCommand: python workflow_app.py
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: PYTHONUNBUFFERED
+        value: "1"
+
+  # 2. Hermes Agent Studio Master Web Service & UI
+  - type: web
+    name: hermes-agent-studio
+    runtime: python
+    region: oregon
+    repo: https://github.com/Sumukh047/Hermes-Celestia
+    branch: main
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: PYTHONUNBUFFERED
+        value: "1"

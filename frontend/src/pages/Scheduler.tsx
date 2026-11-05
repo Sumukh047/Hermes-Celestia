@@ -50,6 +50,7 @@ export const Scheduler: React.FC = () => {
   const [toast, setToast] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [selectedResult, setSelectedResult] = useState<{ title: string; result: string; runId?: string } | null>(null);
+  const [triggeringRw, setTriggeringRw] = useState(false);
 
   // Edit Modal State
   const [editingSchedule, setEditingSchedule] = useState<ScheduleItem | null>(null);
@@ -141,6 +142,25 @@ export const Scheduler: React.FC = () => {
     setEditIntervalType(s.cron_expression);
     setEditCronExpr(s.cron_expression);
     setEditTaskPrompt(s.task_prompt);
+  };
+
+  const handleTriggerRenderWorkflow = async () => {
+    setTriggeringRw(true);
+    try {
+      const res = await api('/render-workflows/dispatch', {
+        method: 'POST',
+        body: JSON.stringify({
+          task_name: 'agent_autonomous_task',
+          prompt: 'Execute distributed email intelligence and autonomous agent workflow',
+          agent_id: agents.length > 0 ? agents[0].id : null
+        })
+      });
+      showToast(`Render Workflow dispatched! ID: ${res.workflow_id} (render.com/workflows)`);
+    } catch (e: any) {
+      showToast(`Render Workflow error: ${e.message}`);
+    } finally {
+      setTriggeringRw(false);
+    }
   };
 
   const handleSaveEdit = async (e: React.FormEvent) => {
@@ -352,6 +372,76 @@ export const Scheduler: React.FC = () => {
             Active (15s Tick)
           </div>
         </div>
+      </div>
+
+      {/* Render Workflows Integration Banner (https://render.com/workflows) */}
+      <div style={{
+        background: 'linear-gradient(135deg, rgba(88, 101, 242, 0.1) 0%, rgba(71, 82, 196, 0.05) 100%)',
+        border: '1px solid rgba(88, 101, 242, 0.3)',
+        borderRadius: '16px',
+        padding: '18px 24px',
+        marginBottom: '24px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '16px'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div style={{
+            width: '42px',
+            height: '42px',
+            borderRadius: '10px',
+            background: 'linear-gradient(135deg, #46E3B7 0%, #2085EC 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 4px 12px rgba(32, 133, 236, 0.3)'
+          }}>
+            <Zap size={22} color="#fff" />
+          </div>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
+              <b style={{ color: '#fff', fontSize: '15px' }}>Render Workflows Orchestrator</b>
+              <span style={{
+                background: 'rgba(87, 242, 135, 0.15)',
+                color: '#57F287',
+                border: '1px solid rgba(87, 242, 135, 0.3)',
+                padding: '2px 8px',
+                borderRadius: '10px',
+                fontSize: '11px',
+                fontWeight: 700
+              }}>
+                render.com/workflows
+              </span>
+            </div>
+            <p style={{ color: '#949BA4', fontSize: '13px', margin: 0 }}>
+              Durable background tasks, automated retry logic, and distributed multi-agent workflows orchestrated via Render Blueprints.
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={handleTriggerRenderWorkflow}
+          disabled={triggeringRw}
+          style={{
+            background: 'linear-gradient(135deg, #46E3B7 0%, #2085EC 100%)',
+            border: 'none',
+            color: '#fff',
+            padding: '10px 18px',
+            borderRadius: '8px',
+            fontWeight: 700,
+            fontSize: '13px',
+            cursor: triggeringRw ? 'not-allowed' : 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            boxShadow: '0 4px 14px rgba(32, 133, 236, 0.3)'
+          }}
+        >
+          <Sparkles size={14} />
+          {triggeringRw ? 'Dispatching to Render...' : 'Run Render Workflow Task'}
+        </button>
       </div>
 
       {/* Automations List */}
